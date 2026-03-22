@@ -1,0 +1,37 @@
+{
+  "name": "@real-estate/web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "clean": "node -e \"const fs=require('fs');for (const p of ['.next','node_modules/.cache']){try{fs.rmSync(p,{recursive:true,force:true})}catch(e){}}\"",
+    "dev": "node scripts/ensure-dev-next.js && cross-env NODE_ENV=development next dev -p 3002",
+    "dev:clean": "npm run clean && node scripts/ensure-dev-next.js && cross-env NODE_ENV=development next dev -p 3002",
+    "dev:alt": "cross-env NODE_ENV=development next dev -p 3005",
+    "smoke": "node scripts/smoke-routes.mjs",
+    "build": "next build",
+    "postbuild": "node -e \"require('fs').writeFileSync(require('path').join(process.cwd(),'.need-clean-before-dev'),'')\"",
+    "start": "next start -p 3002",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@real-estate/shared": "*",
+    "clsx": "^2.1.0",
+    "lucide-react": "^0.303.0",
+    "next": "^14.2.35",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "react-hot-toast": "^2.6.0",
+    "recharts": "^2.10.0",
+    "zustand": "^5.0.12"
+  },
+  "devDependencies": {
+    "cross-env": "^7.0.3",
+    "@types/node": "^20.10.0",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "autoprefixer": "^10.4.0",
+    "postcss": "^8.4.0",
+    "tailwindcss": "^3.4.0",
+    "typescript": "^5.3.0"
+  }
+}

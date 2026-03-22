@@ -1,0 +1,69 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: real_estate
+    ports:
+      - "5434:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6380:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    # Host 18080 avoids clashing with a local API on 8000/8001
+    ports:
+      - "18080:8000"
+    environment:
+      NODE_ENV: production
+      PORT: "8000"
+      DATABASE_TYPE: postgres
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: real_estate
+      # First-time Postgres schema (set "false" in real production and use migrations)
+      DATABASE_SYNC: "true"
+      CORS_ORIGIN: http://localhost:3003,http://127.0.0.1:3003,http://localhost:3002,http://127.0.0.1:3002
+    volumes:
+      - api_uploads:/app/apps/api/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:18080/api/v1
+        NEXT_PUBLIC_MAPBOX_TOKEN: ${NEXT_PUBLIC_MAPBOX_TOKEN:-}
+    ports:
+      - "3003:3000"
+    environment:
+      NODE_ENV: production
+    depends_on:
+      - api
+
+volumes:
+  pgdata: {}
+  api_uploads: {}

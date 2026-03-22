@@ -1,0 +1,20 @@
+{
+  "app\\calculator\\CalculatorView.tsx -> ./CalculatorCharts": {
+    "id": "app\\calculator\\CalculatorView.tsx -> ./CalculatorCharts",
+    "files": [
+      "static/chunks/_app-pages-browser_src_app_calculator_CalculatorCharts_tsx.js"
+    ]
+  },
+  "app\\properties\\PropertiesView.tsx -> ./PriceTrendChart": {
+    "id": "app\\properties\\PropertiesView.tsx -> ./PriceTrendChart",
+    "files": [
+      "static/chunks/_app-pages-browser_src_app_properties_PriceTrendChart_tsx.js"
+    ]
+  },
+  "components\\AppProviders.tsx -> react-hot-toast": {
+    "id": "components\\AppProviders.tsx -> react-hot-toast",
+    "files": [
+      "static/chunks/_app-pages-browser_node_modules_react-hot-toast_dist_index_mjs.js"
+    ]
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "title": "Luxury 3BHK in Bandra West",
+  "description": "Premium sea-facing apartment with modern amenities. Ideal for NRI investment.",
+  "country": "IND",
+  "city": "Mumbai",
+  "state": "Maharashtra",
+  "price": 25000000,
+  "currency": "INR",
+  "lat": 19.0596,
+  "lng": 72.8295,
+  "bedrooms": 3,
+  "bathrooms": 3,
+  "area_sqft": 1850,
+  "rental_estimate": 95000,
+  "property_type": "apartment",
+  "listing_type": "sale"
+}

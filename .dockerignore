@@ -1,0 +1,14 @@
+node_modules
+**/.next
+**/dist
+.git
+.gitignore
+out
+**/out
+.env
+.env.*
+**/.env.local
+*.log
+.DS_Store
+coverage
+.turbo

@@ -1,0 +1,65 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground: #0f172a;
+  --background: #f8fafc;
+  --card: #ffffff;
+  --muted: #64748b;
+  --primary: #22d3ee;
+}
+
+.dark {
+  --foreground: #f1f5f9;
+  --background: #020617;
+  --card: #0b1220;
+  --muted: #94a3b8;
+  --primary: #22d3ee;
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 px-6 py-3 font-semibold text-slate-950 shadow-brand transition-all duration-200 hover:scale-105 hover:shadow-brand-lg active:scale-[0.98];
+  }
+  .btn-primary-outline {
+    @apply inline-flex items-center justify-center rounded-xl border border-white/15 bg-brand-card/80 px-6 py-3 font-semibold text-white shadow-brand transition-all duration-200 hover:scale-105 hover:border-cyan-400/40 hover:bg-white/5;
+  }
+  .card-premium {
+    @apply rounded-2xl border border-white/10 bg-brand-card shadow-brand backdrop-blur-xl;
+  }
+}
+
+@layer utilities {
+  .animate-fade-in-step {
+    animation: fadeIn 0.45s ease-out;
+  }
+  .text-balance {
+    text-wrap: balance;
+  }
+  .animate-gradient {
+    background-size: 200% 200%;
+    animation: gradient 8s ease infinite;
+  }
+}
+
+@keyframes gradient {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

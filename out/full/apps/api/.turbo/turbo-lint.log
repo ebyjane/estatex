@@ -1,0 +1,13 @@
+
+> @real-estate/api@0.1.0 lint
+> eslint "{src,apps,libs,test}/**/*.ts"
+
+'eslint' is not recognized as an internal or external command,
+operable program or batch file.
+npm error Lifecycle script `lint` failed with error:
+npm error code 1
+npm error path C:\Users\Admin\Documents\projects\real-estate\apps\api
+npm error workspace @real-estate/api@0.1.0
+npm error location C:\Users\Admin\Documents\projects\real-estate\apps\api
+npm error command failed
+npm error command C:\WINDOWS\system32\cmd.exe /d /s /c eslint "{src,apps,libs,test}/**/*.ts"

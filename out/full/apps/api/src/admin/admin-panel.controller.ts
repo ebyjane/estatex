@@ -1,0 +1,163 @@
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
+import { AdminRoleGuard } from '../auth/guards/admin-role.guard';
+import { PropertiesService } from '../properties/properties.service';
+import { AdminPanelService } from './admin-panel.service';
+
+@Controller('admin')
+@UseGuards(AuthGuard('jwt'), AdminRoleGuard)
+export class AdminPanelController {
+  constructor(
+    private readonly panel: AdminPanelService,
+    private readonly properties: PropertiesService,
+  ) {}
+
+  @Get('overview')
+  overview() {
+    return this.panel.overview();
+  }
+
+  @Get('ingestion-logs')
+  ingestionLogs() {
+    return { data: this.panel.getIngestionLogs() };
+  }
+
+  @Post('ingestion-log')
+  logIngestion(@Body() body: { action: string; detail?: string }) {
+    this.panel.pushIngestion(body.action || 'event', body.detail || '');
+    return { ok: true };
+  }
+
+  @Get('properties')
+  listProperties(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('city') city?: string,
+    @Query('minPrice') minPrice?: string,
+    @Query('maxPrice') maxPrice?: string,
+    @Query('minAi') minAi?: string,
+    @Query('listingType') listingType?: string,
+    @Query('status') status?: string,
+  ) {
+    return this.panel.listProperties({
+      page: page ? +page : 1,
+      limit: limit ? +limit : 20,
+      city,
+      minPrice: minPrice ? +minPrice : undefined,
+      maxPrice: maxPrice ? +maxPrice : undefined,
+      minAi: minAi ? +minAi : undefined,
+      listingType,
+      status,
+    });
+  }
+
+  @Get('properties/:id')
+  getProperty(@Param('id') id: string) {
+    return this.panel.getPropertyAdmin(id);
+  }
+
+  @Patch('properties/:id')
+  patchProperty(
+    @Param('id') id: string,
+    @Body()
+    body: {
+      status?: string;
+      isFeatured?: boolean;
+      isVerified?: boolean;
+      rejectReason?: string | null;
+      title?: string;
+      price?: number;
+    },
+  ) {
+    return this.panel.patchProperty(id, body);
+  }
+
+  @Delete('properties/:id')
+  deleteProperty(@Param('id') id: string) {
+    return this.panel.deleteProperty(id);
+  }
+
+  @Get('users')
+  listUsers(@Query('page') page?: string, @Query('limit') limit?: string) {
+    return this.panel.listUsers(page ? +page : 1, limit ? +limit : 20);
+  }
+
+  @Patch('users/:id')
+  patchUser(
+    @Param('id') id: string,
+    @Body() body: { role?: string; accountStatus?: 'active' | 'blocked' },
+  ) {
+    return this.panel.patchUser(id, body);
+  }
+
+  @Get('leads')
+  listLeads(@Query('page') page?: string, @Query('limit') limit?: string) {
+    return this.panel.listLeads(page ? +page : 1, limit ? +limit : 30);
+  }
+
+  @Patch('leads/:id')
+  patchLead(@Param('id') id: string, @Body() body: { status?: string }) {
+    return this.panel.patchLead(id, body);
+  }
+
+  @Get('seo')
+  listSeo() {
+    return this.panel.listSeo();
+  }
+
+  @Post('seo')
+  upsertSeo(
+    @Body()
+    body: {
+      id?: string;
+      pagePath: string;
+      metaTitle: string;
+      metaDescription: string;
+      keywords?: string;
+      canonicalUrl?: string;
+      ogTitle?: string;
+      ogDescription?: string;
+      jsonLd?: string | null;
+    },
+  ) {
+    return this.panel.upsertSeo(body);
+  }
+
+  @Delete('seo/:id')
+  deleteSeo(@Param('id') id: string) {
+    return this.panel.deleteSeo(id);
+  }
+
+  @Get('settings')
+  getSettings() {
+    return this.panel.getSettings();
+  }
+
+  @Patch('settings')
+  patchSettings(
+    @Body()
+    body: {
+      defaultCurrency?: string;
+      fxOverrides?: Record<string, number>;
+      aiWeights?: { yieldWeight?: number; growthWeight?: number; riskWeight?: number };
+    },
+  ) {
+    return this.panel.patchSettings(body);
+  }
+
+  /** Same payload as public submit-listing; higher image cap + multiple videos. */
+  @Post('submit-listing')
+  submitListing(@Body() body: Record<string, unknown>) {
+    return this.properties.submitPublicListing(body, { maxImages: 500, allowMultiVideo: true });
+  }
+}
