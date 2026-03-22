@@ -39,6 +39,13 @@ const nextConfig = {
       },
     ];
   },
+  /** When NEXT_PUBLIC_API_URL=/api, proxy browser calls to your Nest host (set in Vercel / Docker). */
+  async rewrites() {
+    const apiOrigin = process.env.API_BACKEND_ORIGIN?.trim();
+    if (!apiOrigin) return [];
+    const origin = apiOrigin.replace(/\/$/, '');
+    return [{ source: '/api/:path*', destination: `${origin}/api/:path*` }];
+  },
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: 'images.unsplash.com', pathname: '/**' },
@@ -48,8 +55,7 @@ const nextConfig = {
     ],
   },
   env: {
-    /** Origin only or full `.../api/v1` — see `src/lib/api.ts` resolver */
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000',
+    /** Do not set NEXT_PUBLIC_API_URL here — defaults live in `lib/api.ts` (avoids baking localhost into prod). */
     NEXT_PUBLIC_MAPBOX_TOKEN: process.env.NEXT_PUBLIC_MAPBOX_TOKEN || '',
   },
 };

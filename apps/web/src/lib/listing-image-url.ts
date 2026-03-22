@@ -1,5 +1,5 @@
 import { pickListingThumbForProperty, resolveListingThumbnailUrl } from '@real-estate/shared';
-import { getApiOrigin } from '@/lib/api-config';
+import { getApiOrigin } from '@/lib/api';
 
 /** Turn `/uploads/...` (API static files) into an absolute URL the browser can load. */
 export function absoluteListingImageUrl(raw: string | undefined | null): string | undefined {

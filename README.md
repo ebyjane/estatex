@@ -14,7 +14,7 @@ npm run start:all
 
 Opens automatically at:
 - **Frontend**: http://localhost:3002 (`apps/web` dev script)
-- **API**: http://localhost:8000/api/v1 (see `scripts/startup.ts` / `dev:api`)
+- **API**: local Nest on port **8000** (`/api/v1`). Set `NEXT_PUBLIC_API_URL` in `apps/web/.env.local` (see `apps/web/.env.example`). On Vercel use `NEXT_PUBLIC_API_URL=/api` and `API_BACKEND_ORIGIN` for rewrites in `next.config.js`.
 
 If the UI loads **without Tailwind** and the console shows many **`/_next/static/...` 404s**, stop the server and run **`npm run dev:web:clean`** from the repo root (mixed `next build` + `next dev` cache). See `apps/web/README.md`.
 

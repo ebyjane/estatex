@@ -2,6 +2,12 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { AppProviders } from '@/components/AppProviders';
 import { Footer } from '@/components/layout/Footer';
+import { API_BASE_URL } from '@/lib/api';
+
+if (process.env.NEXT_PUBLIC_DEBUG_API === '1') {
+  console.log('ENV:', process.env.NODE_ENV);
+  console.log('API_BASE_URL:', API_BASE_URL);
+}
 
 export const metadata: Metadata = {
   title: {

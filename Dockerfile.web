@@ -1,7 +1,8 @@
 # syntax=docker/dockerfile:1
-# Next.js standalone image. Build-time env for the browser bundle:
+# Next.js standalone image. Build-time env for the browser bundle (avoid baking loopback in prod):
 #   docker build -f Dockerfile.web -t real-estate-web \
-#     --build-arg NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1 .
+#     --build-arg NEXT_PUBLIC_API_URL=/api .
+# Local compose often overrides with your machine’s mapped API URL.
 
 FROM node:20-bookworm AS pruner
 WORKDIR /app
@@ -10,7 +11,7 @@ RUN npx turbo prune @real-estate/web --docker
 
 FROM node:20-bookworm AS installer
 WORKDIR /app
-ARG NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
+ARG NEXT_PUBLIC_API_URL=/api
 ARG NEXT_PUBLIC_MAPBOX_TOKEN=
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_MAPBOX_TOKEN=$NEXT_PUBLIC_MAPBOX_TOKEN

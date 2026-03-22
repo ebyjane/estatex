@@ -70,7 +70,7 @@ async function main() {
 ─────────────────────────────────────────────────────────────
 
 📱 Frontend will be available at: http://localhost:3002
-🔌 API will be available at: http://localhost:8000/api/v1
+🔌 API (Nest): port 8000 — base path /api/v1 (set NEXT_PUBLIC_API_URL for the web app)
 
 📋 Test Credentials:
    Email: admin@estatex.ai
@@ -96,7 +96,7 @@ async function main() {
     console.log('\nStarting Frontend Server...');
     const webProcess = spawn('npm', ['run', 'dev:web'], {
       cwd: rootDir,
-      env: { ...process.env, NEXT_PUBLIC_API_URL: 'http://localhost:8000/api/v1' },
+      env: { ...process.env },
       stdio: 'inherit',
       shell: isWindows,
       detached: isWindows
@@ -115,7 +115,7 @@ async function main() {
 ║  ✨ Platform Started Successfully!                            ║
 ║                                                                ║
 ║  🔗 Open Browser: http://localhost:3002                       ║
-║  🌐 API base: http://localhost:8000/api/v1                    ║
+║  🌐 API: Nest on port 8000 (/api/v1) — sync NEXT_PUBLIC_API_URL  ║
 ║                                                                ║
 ║  🧪 Get Started:                                              ║
 ║     1. Click "Browse Properties"                              ║

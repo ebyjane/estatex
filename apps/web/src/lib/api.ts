@@ -1,4 +1,8 @@
-import { API_BASE_URL, API_V1_BASE, getApiOrigin } from '@/lib/api-config';
+import {
+  API_BASE_URL,
+  API_V1_BASE,
+  getApiOrigin,
+} from '../../lib/api';
 
 export { API_BASE_URL, API_V1_BASE, getApiOrigin };
 
