@@ -1,17 +1,12 @@
 import { pickListingThumbForProperty, resolveListingThumbnailUrl } from '@real-estate/shared';
-
-const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
-
-function apiOrigin(): string {
-  return API.replace(/\/api\/v1\/?$/, '');
-}
+import { getApiOrigin } from '@/lib/api-config';
 
 /** Turn `/uploads/...` (API static files) into an absolute URL the browser can load. */
 export function absoluteListingImageUrl(raw: string | undefined | null): string | undefined {
   if (!raw?.trim()) return undefined;
   const u = raw.trim();
   if (u.startsWith('http://') || u.startsWith('https://')) return u;
-  if (u.startsWith('/')) return `${apiOrigin()}${u}`;
+  if (u.startsWith('/')) return `${getApiOrigin()}${u}`;
   return u;
 }
 

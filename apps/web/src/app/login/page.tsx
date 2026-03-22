@@ -61,7 +61,7 @@ export default function LoginPage() {
   };
 
   const explainNetwork = () =>
-    `Cannot reach API at ${apiBaseDisplay()}. Start the Nest server (port 8000) and run npm run seed:data, or use Generate demo data on the Properties page.`;
+    `Cannot reach API at ${apiBaseDisplay()}. Start the Nest API and ensure NEXT_PUBLIC_API_URL matches it, then run npm run seed:data if needed, or use Generate demo data on the Properties page.`;
 
   function messageFromLoginError(err: unknown): string {
     if (err instanceof TypeError) return explainNetwork();

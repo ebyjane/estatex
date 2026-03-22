@@ -1,4 +1,6 @@
-const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+import { API_BASE_URL, API_V1_BASE, getApiOrigin } from '@/lib/api-config';
+
+export { API_BASE_URL, API_V1_BASE, getApiOrigin };
 
 const DEFAULT_TIMEOUT_MS = 45_000;
 
@@ -20,7 +22,7 @@ export async function uploadAdminMedia(files: File[]): Promise<{ urls: string[] 
   }
   const form = new FormData();
   for (const f of files) form.append('files', f);
-  const res = await fetch(`${API}/admin/uploads`, {
+  const res = await fetch(`${API_V1_BASE}/admin/uploads`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${token}`,
@@ -55,7 +57,7 @@ export async function fetchApi<T>(path: string, init?: RequestInit & { timeoutMs
   }
   let res: Response;
   try {
-    res = await fetch(`${API}${path}`, {
+    res = await fetch(`${API_V1_BASE}${path}`, {
       ...rest,
       signal: ctrl.signal,
       headers: { 'Content-Type': 'application/json', ...getAuthHeaders(), ...rest.headers },
@@ -65,9 +67,9 @@ export async function fetchApi<T>(path: string, init?: RequestInit & { timeoutMs
       (e instanceof DOMException && e.name === 'AbortError') ||
       (e instanceof Error && e.name === 'AbortError');
     if (aborted) {
-      throw new TypeError(`REQUEST_TIMEOUT:${API}`);
+      throw new TypeError(`REQUEST_TIMEOUT:${API_V1_BASE}`);
     }
-    throw new TypeError(`NETWORK_ERROR:${API}`);
+    throw new TypeError(`NETWORK_ERROR:${API_V1_BASE}`);
   } finally {
     clearTimeout(timer);
     userSignal?.removeEventListener('abort', onUserAbort);
@@ -76,10 +78,11 @@ export async function fetchApi<T>(path: string, init?: RequestInit & { timeoutMs
   return res.json() as Promise<T>;
 }
 
+/** Full `/api/v1` base for error messages and debugging. */
 export function apiBaseDisplay(): string {
-  return API;
+  return API_V1_BASE;
 }
 
 export function apiUrl(path: string) {
-  return `${API}${path}`;
+  return `${API_V1_BASE}${path}`;
 }

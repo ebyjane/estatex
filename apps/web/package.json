@@ -8,7 +8,7 @@
     "dev:clean": "npm run clean && node scripts/ensure-dev-next.js && cross-env NODE_ENV=development next dev -p 3002",
     "dev:alt": "cross-env NODE_ENV=development next dev -p 3005",
     "smoke": "node scripts/smoke-routes.mjs",
-    "build": "next build",
+    "build": "cross-env NODE_ENV=production next build",
     "postbuild": "node -e \"require('fs').writeFileSync(require('path').join(process.cwd(),'.need-clean-before-dev'),'')\"",
     "start": "next start -p 3002",
     "lint": "next lint"

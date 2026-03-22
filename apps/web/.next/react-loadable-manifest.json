@@ -5,12 +5,6 @@
       "static/chunks/_app-pages-browser_src_app_properties_PriceTrendChart_tsx.js"
     ]
   },
-  "app\\property\\[id]\\PropertyDetailView.tsx -> ./PropertyDetailCharts": {
-    "id": "app\\property\\[id]\\PropertyDetailView.tsx -> ./PropertyDetailCharts",
-    "files": [
-      "static/chunks/_app-pages-browser_src_app_property_id_PropertyDetailCharts_tsx.js"
-    ]
-  },
   "components\\AppProviders.tsx -> react-hot-toast": {
     "id": "components\\AppProviders.tsx -> react-hot-toast",
     "files": [

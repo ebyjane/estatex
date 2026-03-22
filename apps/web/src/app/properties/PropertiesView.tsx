@@ -363,7 +363,7 @@ export function PropertiesView() {
       setReloadNonce((n) => n + 1);
     } catch {
       setSeedError(
-        'Could not generate data. Ensure the API is running on port 8000 and try again, or run npm run seed:data from the project root.',
+        'Could not generate data. Ensure the API is running and NEXT_PUBLIC_API_URL is correct, then try again or run npm run seed:data from the project root.',
       );
     } finally {
       setSeedBusy(false);
