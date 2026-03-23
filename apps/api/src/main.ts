@@ -8,6 +8,10 @@ import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  const expressApp = app.getHttpAdapter().getInstance();
+  expressApp.get('/', (_req: unknown, res: { send: (body: string) => void }) => {
+    res.send('API OK');
+  });
   const uploadRoot = join(process.cwd(), 'uploads');
   fs.mkdirSync(join(uploadRoot, 'listings'), { recursive: true });
   app.useStaticAssets(uploadRoot, { prefix: '/uploads/', index: false });
@@ -32,9 +36,9 @@ async function bootstrap() {
   });
   app.setGlobalPrefix('api/v1');
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
-  const port = Number(process.env.PORT) || 8000;
-  await app.listen(port);
-  console.log(`Server running on port ${port}`);
-  console.log(`API base: http://localhost:${port}/api/v1`);
+  const PORT = Number(process.env.PORT) || 8000;
+  await app.listen(PORT);
+  console.log('Server running on port', PORT);
+  console.log(`API base: http://localhost:${PORT}/api/v1`);
 }
 bootstrap();
