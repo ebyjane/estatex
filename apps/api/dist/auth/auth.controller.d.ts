@@ -55,6 +55,12 @@ export declare class AuthController {
         };
         accessToken: string;
         expiresIn: number;
+    } | {
+        success: boolean;
+        data: null;
+        message: string;
+        accessToken: null;
+        user: null;
     }>;
     me(user: {
         id: string;

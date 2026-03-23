@@ -14,22 +14,19 @@ async function bootstrap() {
     try {
         const ds = app.get(typeorm_1.DataSource);
         if (ds.isInitialized) {
-            const dbPath = typeof ds.options.database === 'string'
-                ? ds.options.database
-                : '';
-            console.log(dbPath ? `DB Connected: ${dbPath}` : 'DB Connected');
+            console.log('Connected to DB');
+            const o = ds.options;
+            console.log(o.url
+                ? 'DB host: PostgreSQL via DATABASE_URL'
+                : `DB host: PostgreSQL / ${o.database ?? 'default'}`);
         }
     }
     catch {
-        console.log('DB Connected');
+        console.error('DB connection check failed at startup');
     }
     app.enableCors({
-        origin: process.env.CORS_ORIGIN?.split(',') || [
-            'http://localhost:3000',
-            'http://localhost:3002',
-            'http://127.0.0.1:3002',
-        ],
-        credentials: true,
+        origin: '*',
+        credentials: false,
         allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
     });
     app.setGlobalPrefix('api/v1');

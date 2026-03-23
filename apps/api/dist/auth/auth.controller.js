@@ -66,8 +66,22 @@ let AuthController = class AuthController {
     register(dto) {
         return this.auth.register(dto);
     }
-    login(dto) {
-        return this.auth.login(dto.email, dto.password);
+    async login(dto) {
+        try {
+            return await this.auth.login(dto.email, dto.password);
+        }
+        catch (error) {
+            if (error instanceof common_1.UnauthorizedException)
+                throw error;
+            console.error('POST /auth/login', error);
+            return {
+                success: false,
+                data: null,
+                message: error instanceof Error ? error.message : 'Login failed',
+                accessToken: null,
+                user: null,
+            };
+        }
     }
     me(user) {
         return this.auth.validateUser(user.id).then((u) => (u ? this.auth.sanitize(u) : null));
@@ -86,7 +100,7 @@ __decorate([
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [LoginDto]),
-    __metadata("design:returntype", void 0)
+    __metadata("design:returntype", Promise)
 ], AuthController.prototype, "login", null);
 __decorate([
     (0, common_1.Get)('me'),

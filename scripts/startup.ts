@@ -83,7 +83,13 @@ async function main() {
     console.log('Starting API Server...');
     const apiProcess = spawn('npm', ['run', 'dev:api'], {
       cwd: rootDir,
-      env: { ...process.env, PORT: '8000', DATABASE_TYPE: 'sqlite' },
+      env: {
+        ...process.env,
+        PORT: '8000',
+        DATABASE_URL:
+          process.env.DATABASE_URL ||
+          'postgresql://postgres:postgres@localhost:5434/real_estate',
+      },
       stdio: 'inherit',
       shell: isWindows,
       detached: isWindows

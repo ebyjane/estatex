@@ -21,43 +21,10 @@ const ai_module_1 = require("./ai/ai.module");
 const admin_module_1 = require("./admin/admin.module");
 const seo_module_1 = require("./seo/seo.module");
 const health_module_1 = require("./health/health.module");
-const path = require("path");
-const getDatabaseConfig = () => {
-    const dbType = process.env.DATABASE_TYPE || 'sqlite';
-    if (dbType === 'postgres') {
-        return {
-            type: 'postgres',
-            host: process.env.DB_HOST || 'localhost',
-            port: +(process.env.DB_PORT || 5432),
-            username: process.env.DB_USER || 'postgres',
-            password: process.env.DB_PASSWORD || 'postgres',
-            database: process.env.DB_NAME || 'real_estate',
-        };
-    }
-    const fs = require('fs');
-    const cwd = process.cwd();
-    let databasePath;
-    if (process.env.DATABASE_PATH) {
-        databasePath = path.isAbsolute(process.env.DATABASE_PATH)
-            ? process.env.DATABASE_PATH
-            : path.join(cwd, process.env.DATABASE_PATH);
-    }
-    else {
-        const repoRootDb = path.join(cwd, '..', '..', 'real-estate.db');
-        const cwdDb = path.join(cwd, 'real-estate.db');
-        if (fs.existsSync(repoRootDb))
-            databasePath = repoRootDb;
-        else if (fs.existsSync(cwdDb))
-            databasePath = cwdDb;
-        else
-            databasePath = repoRootDb;
-    }
-    return {
-        type: 'better-sqlite3',
-        database: databasePath,
-    };
-};
-const dbConfig = getDatabaseConfig();
+const investments_module_1 = require("./investments/investments.module");
+const supabase_module_1 = require("./supabase/supabase.module");
+const database_config_1 = require("./database/database.config");
+const orm = (0, database_config_1.getTypeOrmConfig)();
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -66,10 +33,11 @@ exports.AppModule = AppModule = __decorate([
         imports: [
             config_1.ConfigModule.forRoot({ isGlobal: true }),
             health_module_1.HealthModule,
+            supabase_module_1.SupabaseModule,
             typeorm_1.TypeOrmModule.forRoot({
-                ...dbConfig,
-                autoLoadEntities: true,
-                synchronize: process.env.DATABASE_SYNC === 'true' || process.env.NODE_ENV !== 'production',
+                ...orm,
+                synchronize: process.env.DATABASE_SYNC === 'true' ||
+                    (process.env.NODE_ENV !== 'production' && process.env.DATABASE_SYNC !== 'false'),
             }),
             ai_module_1.AiModule,
             admin_module_1.AdminModule,
@@ -81,6 +49,7 @@ exports.AppModule = AppModule = __decorate([
             fx_module_1.FxModule,
             compare_module_1.CompareModule,
             stripe_module_1.StripeModule,
+            investments_module_1.InvestmentsModule,
         ],
     })
 ], AppModule);

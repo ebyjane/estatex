@@ -285,7 +285,11 @@ export function PropertiesView() {
       const parsed = parsePropertiesPageResponse(raw);
       const batch = parsed.items.map(mapUnknownToListingProperty);
       setStaggerFromIndex(startIdx);
-      setProperties((prev) => [...prev, ...batch]);
+      setProperties((prev) => {
+        const existing = new Set(prev.map((p) => p.id));
+        const appended = batch.filter((p) => !existing.has(p.id));
+        return appended.length === 0 ? prev : [...prev, ...appended];
+      });
       setHasMore(parsed.hasMore);
       nextPageRef.current = pageNum + 1;
     } catch (e) {

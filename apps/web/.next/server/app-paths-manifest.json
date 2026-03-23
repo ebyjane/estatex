@@ -1,5 +1,7 @@
 {
-  "/dashboard/page": "app/dashboard/page.js",
-  "/properties/page": "app/properties/page.js",
-  "/login/page": "app/login/page.js"
+  "/_not-found/page": "app/_not-found/page.js",
+  "/calculator/page": "app/calculator/page.js",
+  "/page": "app/page.js",
+  "/post-property/page": "app/post-property/page.js",
+  "/properties/page": "app/properties/page.js"
 }

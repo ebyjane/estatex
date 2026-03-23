@@ -11,8 +11,8 @@
     "start:all": "ts-node scripts/startup.ts",
     "dev": "turbo run dev",
     "dev:simple": "npm run dev:api & npm run dev:web",
-    "seed:data": "npm run build -w @real-estate/shared && ts-node scripts/seed.ts",
-    "seed:10k": "ts-node scripts/sqliteBulk10k.ts",
+    "seed:data": "npm run build -w @real-estate/shared && ts-node --project scripts/tsconfig.seed.json scripts/seed-postgres.ts",
+    "seed:10k": "node -e \"console.error('Use npm run seed:data with DATABASE_URL (PostgreSQL).'); process.exit(1)\"",
     "seed:india-rent": "npm run build -w @real-estate/shared && ts-node scripts/generateIndiaRentData.ts",
     "seed:admin": "ts-node scripts/seedAdmin.ts",
     "generate-data": "ts-node scripts/generateLargeDataset.ts",
@@ -31,7 +31,6 @@
   },
   "devDependencies": {
     "@nestjs/platform-express": "^11.1.17",
-    "@types/better-sqlite3": "^7.6.13",
     "@types/pg": "^8.18.0",
     "bcrypt": "^6.0.0",
     "pg": "^8.19.0",
@@ -45,7 +44,6 @@
     "react-dom": "18.3.1"
   },
   "dependencies": {
-    "better-sqlite3": "^12.8.0",
     "rxjs": "^7.8.2"
   }
 }

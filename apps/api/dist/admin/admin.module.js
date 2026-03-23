@@ -17,6 +17,7 @@ const user_entity_1 = require("../entities/user.entity");
 const lead_entity_1 = require("../entities/lead.entity");
 const seo_page_entity_1 = require("../entities/seo-page.entity");
 const app_settings_entity_1 = require("../entities/app-settings.entity");
+const investment_entity_1 = require("../entities/investment.entity");
 const admin_controller_1 = require("./admin.controller");
 const admin_panel_controller_1 = require("./admin-panel.controller");
 const admin_upload_controller_1 = require("./admin-upload.controller");
@@ -39,6 +40,7 @@ exports.AdminModule = AdminModule = __decorate([
                 lead_entity_1.LeadEntity,
                 seo_page_entity_1.SeoPageEntity,
                 app_settings_entity_1.AppSettingsEntity,
+                investment_entity_1.InvestmentEntity,
             ]),
         ],
         controllers: [admin_controller_1.AdminController, admin_panel_controller_1.AdminPanelController, admin_upload_controller_1.AdminUploadController],

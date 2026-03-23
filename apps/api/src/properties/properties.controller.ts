@@ -29,7 +29,7 @@ export class PropertiesController {
   }
 
   @Get()
-  list(
+  async list(
     @Query('countryId') countryId?: string,
     @Query('countryCode') countryCode?: string,
     @Query('type') type?: string,
@@ -60,27 +60,44 @@ export class PropertiesController {
     } else if (offset != null && offset !== '') {
       offsetNum = Math.max(0, Math.floor(Number(offset)) || 0);
     }
-    const payload = this.service.findAll({
-      countryId,
-      countryCode: countryCode?.trim() || undefined,
-      type,
-      listingType,
-      minPrice: minPrice ? +minPrice : undefined,
-      maxPrice: maxPrice ? +maxPrice : undefined,
-      minBedrooms: minBedrooms ? +minBedrooms : undefined,
-      maxBedrooms: maxBedrooms ? +maxBedrooms : undefined,
-      city: city?.trim() || undefined,
-      minLat: minLat ? +minLat : undefined,
-      maxLat: maxLat ? +maxLat : undefined,
-      minLng: minLng ? +minLng : undefined,
-      maxLng: maxLng ? +maxLng : undefined,
-      limit: limitNum,
-      offset: offsetNum,
-    });
-    if (wantArray) {
-      return payload.then((p) => p.items);
+    try {
+      const payload = await this.service.findAll({
+        countryId,
+        countryCode: countryCode?.trim() || undefined,
+        type,
+        listingType,
+        minPrice: minPrice ? +minPrice : undefined,
+        maxPrice: maxPrice ? +maxPrice : undefined,
+        minBedrooms: minBedrooms ? +minBedrooms : undefined,
+        maxBedrooms: maxBedrooms ? +maxBedrooms : undefined,
+        city: city?.trim() || undefined,
+        minLat: minLat ? +minLat : undefined,
+        maxLat: maxLat ? +maxLat : undefined,
+        minLng: minLng ? +minLng : undefined,
+        maxLng: maxLng ? +maxLng : undefined,
+        limit: limitNum,
+        offset: offsetNum,
+      });
+      if (wantArray) {
+        return payload.items ?? payload.data ?? [];
+      }
+      return payload;
+    } catch (error) {
+      console.error('GET /properties', error);
+      const message = error instanceof Error ? error.message : 'Failed to load properties';
+      if (wantArray) {
+        return [];
+      }
+      return {
+        success: false,
+        data: [],
+        items: [],
+        page: 1,
+        hasMore: false,
+        total: 0,
+        message,
+      };
     }
-    return payload;
   }
 
   @Post('submit-listing')

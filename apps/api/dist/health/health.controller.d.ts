@@ -1,7 +1,8 @@
+import { DataSource } from 'typeorm';
 export declare class HealthController {
-    check(): {
-        ok: boolean;
-        service: string;
-        ts: string;
-    };
+    private readonly ds;
+    constructor(ds: DataSource);
+    check(): Promise<{
+        status: "ok";
+    }>;
 }

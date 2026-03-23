@@ -17,7 +17,7 @@ export class CountryEntity {
   @Column({ length: 100 })
   name: string;
 
-  /** Default lets SQLite `synchronize` add the column to existing DBs without failing NOT NULL on temp table copy. */
+  /** Sensible default when ORM adds columns to existing rows. */
   @Column({ name: 'currency_code', length: 3, default: 'USD' })
   currencyCode: string;
 

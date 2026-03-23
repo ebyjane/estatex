@@ -10,9 +10,6 @@ import {
 } from 'typeorm';
 import { PropertyImageEntity } from './property-image.entity';
 
-/** Postgres accepts `timestamp`; SQLite driver expects `datetime` in TypeORM metadata. */
-const LISTING_EXPIRES_AT_TYPE = process.env.DATABASE_TYPE === 'postgres' ? 'timestamp' : 'datetime';
-
 @Entity('properties')
 export class PropertyEntity {
   @PrimaryGeneratedColumn('uuid')
@@ -163,7 +160,7 @@ export class PropertyEntity {
   fraudFlag: boolean;
 
   /** Listing hidden from search after this time (30-day policy). Null = no expiry (legacy). */
-  @Column({ name: 'listing_expires_at', type: LISTING_EXPIRES_AT_TYPE, nullable: true })
+  @Column({ name: 'listing_expires_at', type: 'timestamp', nullable: true })
   listingExpiresAt: Date | null;
 
   @Column({ name: 'report_count', default: 0 })

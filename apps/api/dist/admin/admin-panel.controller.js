@@ -11,6 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
+var AdminPanelController_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AdminPanelController = void 0;
 const common_1 = require("@nestjs/common");
@@ -18,13 +19,24 @@ const passport_1 = require("@nestjs/passport");
 const admin_role_guard_1 = require("../auth/guards/admin-role.guard");
 const properties_service_1 = require("../properties/properties.service");
 const admin_panel_service_1 = require("./admin-panel.service");
-let AdminPanelController = class AdminPanelController {
+let AdminPanelController = AdminPanelController_1 = class AdminPanelController {
     constructor(panel, properties) {
         this.panel = panel;
         this.properties = properties;
+        this.log = new common_1.Logger(AdminPanelController_1.name);
     }
-    overview() {
-        return this.panel.overview();
+    async overview() {
+        try {
+            return await this.panel.overview();
+        }
+        catch (error) {
+            this.log.error('GET admin/overview', error instanceof Error ? error.stack : error);
+            return {
+                ...this.panel.fallbackOverviewResponse(),
+                success: false,
+                message: error instanceof Error ? error.message : 'Overview unavailable',
+            };
+        }
     }
     ingestionLogs() {
         return { data: this.panel.getIngestionLogs() };
@@ -33,17 +45,28 @@ let AdminPanelController = class AdminPanelController {
         this.panel.pushIngestion(body.action || 'event', body.detail || '');
         return { ok: true };
     }
-    listProperties(page, limit, city, minPrice, maxPrice, minAi, listingType, status) {
-        return this.panel.listProperties({
-            page: page ? +page : 1,
-            limit: limit ? +limit : 20,
-            city,
-            minPrice: minPrice ? +minPrice : undefined,
-            maxPrice: maxPrice ? +maxPrice : undefined,
-            minAi: minAi ? +minAi : undefined,
-            listingType,
-            status,
-        });
+    async listProperties(page, limit, city, minPrice, maxPrice, minAi, listingType, status) {
+        const p = page ? +page : 1;
+        try {
+            return await this.panel.listProperties({
+                page: p,
+                limit: limit ? +limit : 20,
+                city,
+                minPrice: minPrice ? +minPrice : undefined,
+                maxPrice: maxPrice ? +maxPrice : undefined,
+                minAi: minAi ? +minAi : undefined,
+                listingType,
+                status,
+            });
+        }
+        catch (error) {
+            this.log.error('GET admin/properties', error instanceof Error ? error.stack : error);
+            return {
+                ...this.panel.fallbackPropertiesList(p),
+                success: false,
+                message: error instanceof Error ? error.message : 'Properties list unavailable',
+            };
+        }
     }
     getProperty(id) {
         return this.panel.getPropertyAdmin(id);
@@ -90,7 +113,7 @@ __decorate([
     (0, common_1.Get)('overview'),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
-    __metadata("design:returntype", void 0)
+    __metadata("design:returntype", Promise)
 ], AdminPanelController.prototype, "overview", null);
 __decorate([
     (0, common_1.Get)('ingestion-logs'),
@@ -117,7 +140,7 @@ __decorate([
     __param(7, (0, common_1.Query)('status')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, String, String, String, String, String, String, String]),
-    __metadata("design:returntype", void 0)
+    __metadata("design:returntype", Promise)
 ], AdminPanelController.prototype, "listProperties", null);
 __decorate([
     (0, common_1.Get)('properties/:id'),
@@ -213,7 +236,7 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], AdminPanelController.prototype, "submitListing", null);
-exports.AdminPanelController = AdminPanelController = __decorate([
+exports.AdminPanelController = AdminPanelController = AdminPanelController_1 = __decorate([
     (0, common_1.Controller)('admin'),
     (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt'), admin_role_guard_1.AdminRoleGuard),
     __metadata("design:paramtypes", [admin_panel_service_1.AdminPanelService,

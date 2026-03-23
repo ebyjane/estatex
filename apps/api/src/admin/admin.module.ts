@@ -8,6 +8,7 @@ import { UserEntity } from '../entities/user.entity';
 import { LeadEntity } from '../entities/lead.entity';
 import { SeoPageEntity } from '../entities/seo-page.entity';
 import { AppSettingsEntity } from '../entities/app-settings.entity';
+import { InvestmentEntity } from '../entities/investment.entity';
 import { AdminController } from './admin.controller';
 import { AdminPanelController } from './admin-panel.controller';
 import { AdminUploadController } from './admin-upload.controller';
@@ -27,6 +28,7 @@ import { PropertiesModule } from '../properties/properties.module';
       LeadEntity,
       SeoPageEntity,
       AppSettingsEntity,
+      InvestmentEntity,
     ]),
   ],
   controllers: [AdminController, AdminPanelController, AdminUploadController],

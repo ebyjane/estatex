@@ -43,7 +43,7 @@ for (const [path, label] of routes) {
   }
 }
 
-const apiBase = (process.env.SMOKE_API || 'http://127.0.0.1:8000/api/v1').replace(/\/$/, '');
+const apiBase = (process.env.SMOKE_API || 'http://localhost:8000/api/v1').replace(/\/$/, '');
 {
   const ac = new AbortController();
   const t = setTimeout(() => ac.abort(), 5000);

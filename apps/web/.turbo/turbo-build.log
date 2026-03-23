@@ -1,40 +1,52 @@
 
 > @real-estate/web@0.1.0 build
-> next build
+> cross-env NODE_ENV=production next build
 
-   ▲ Next.js 14.1.0
-   - Environments: .env.local
+  ▲ Next.js 14.2.35
+  - Environments: .env.local
 
    Creating an optimized production build ...
  ✓ Compiled successfully
    Linting and checking validity of types ...
    Collecting page data ...
-   Generating static pages (0/11) ...
-   Generating static pages (2/11) 
-   Generating static pages (5/11) 
-   Generating static pages (8/11) 
- ✓ Generating static pages (11/11) 
+   Generating static pages (0/17) ...
+   Generating static pages (4/17) 
+   Generating static pages (8/17) 
+   Generating static pages (12/17) 
+ ✓ Generating static pages (17/17)
    Finalizing page optimization ...
    Collecting build traces ...
 
 Route (app)                              Size     First Load JS
-┌ ○ /                                    807 B          92.1 kB
-├ ○ /_not-found                          0 B                0 B
-├ ○ /admin                               3.15 kB        94.4 kB
-├ ○ /calculator                          1.94 kB         190 kB
-├ ○ /compare                             2.27 kB        93.6 kB
-├ ○ /dashboard                           8.93 kB         199 kB
-├ ○ /login                               1.31 kB        92.6 kB
-├ ○ /properties                          5.41 kB         102 kB
-├ λ /properties/[id]                     1.85 kB        93.1 kB
-├ λ /property/[id]                       3.09 kB         203 kB
-└ ○ /register                            1.46 kB        92.7 kB
-+ First Load JS shared by all            84.5 kB
-  ├ chunks/1dd3208c-c6861a43a5a0827a.js  53.4 kB
-  ├ chunks/997-99b2fa0d2ba69d61.js       29.1 kB
-  └ other shared chunks (total)          2.04 kB
+┌ ○ /                                    1.59 kB          98 kB
+├ ○ /_not-found                          151 B          87.8 kB
+├ ○ /admin                               11 kB           115 kB
+├ ○ /buy-in-[city]                       149 B           116 kB
+├ ○ /buy/property-in-[city]              148 B           116 kB
+├ ○ /calculator                          4.6 kB          108 kB
+├ ○ /compare                             4.01 kB         103 kB
+├ ○ /dashboard                           109 kB          208 kB
+├ ○ /icon.svg                            0 B                0 B
+├ ○ /login                               3.56 kB         107 kB
+├ ƒ /post-property                       12.1 kB         116 kB
+├ ○ /properties                          14.4 kB         132 kB
+├ ○ /property-in-[city]                  149 B           116 kB
+├ ƒ /property/[id]                       5.99 kB         124 kB
+├ ○ /register                            3.28 kB         107 kB
+├ ○ /rent-in-[city]                      149 B           116 kB
+└ ƒ /rent/[slug]                         148 B           116 kB
++ First Load JS shared by all            87.7 kB
+  ├ chunks/1dd3208c-45ef4619033e0dfa.js  53.6 kB
+  ├ chunks/528-06f31ad1f76e7a69.js       31.9 kB
+  └ other shared chunks (total)          2.19 kB
 
+
+ƒ Middleware                             26.4 kB
 
 ○  (Static)   prerendered as static content
-λ  (Dynamic)  server-rendered on demand using Node.js
+ƒ  (Dynamic)  server-rendered on demand
+
+
+> @real-estate/web@0.1.0 postbuild
+> node -e "require('fs').writeFileSync(require('path').join(process.cwd(),'.need-clean-before-dev'),'')"
 

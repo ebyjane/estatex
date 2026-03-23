@@ -19,11 +19,41 @@ let FxController = class FxController {
     constructor(fx) {
         this.fx = fx;
     }
-    latest(from = 'USD', to = 'INR') {
-        return this.fx.getRate(from, to).then((rate) => ({ from, to, rate }));
+    async latest(from = 'USD', to = 'INR') {
+        try {
+            const rate = await this.fx.getRate(from, to);
+            return { from, to, rate };
+        }
+        catch (error) {
+            console.error('GET /fx/latest', error);
+            return {
+                success: false,
+                data: null,
+                from,
+                to,
+                rate: 1,
+                message: error instanceof Error ? error.message : 'FX rate failed',
+            };
+        }
     }
-    convert(amount, from = 'USD', to = 'INR') {
-        return this.fx.convert(+(amount || 1000), from, to);
+    async convert(amount, from = 'USD', to = 'INR') {
+        try {
+            return await this.fx.convert(+(amount || 1000), from, to);
+        }
+        catch (error) {
+            console.error('GET /fx/convert', error);
+            const amt = +(amount || 0);
+            return {
+                success: false,
+                data: null,
+                amount: amt,
+                from,
+                to,
+                rate: 0,
+                converted: amt,
+                message: error instanceof Error ? error.message : 'FX convert failed',
+            };
+        }
     }
 };
 exports.FxController = FxController;
@@ -33,7 +63,7 @@ __decorate([
     __param(1, (0, common_1.Query)('to')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, String]),
-    __metadata("design:returntype", void 0)
+    __metadata("design:returntype", Promise)
 ], FxController.prototype, "latest", null);
 __decorate([
     (0, common_1.Get)('convert'),
@@ -42,7 +72,7 @@ __decorate([
     __param(2, (0, common_1.Query)('to')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, String, String]),
-    __metadata("design:returntype", void 0)
+    __metadata("design:returntype", Promise)
 ], FxController.prototype, "convert", null);
 exports.FxController = FxController = __decorate([
     (0, common_1.Controller)('fx'),

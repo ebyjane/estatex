@@ -5,6 +5,8 @@ export declare class AuthService {
     private userRepo;
     private jwtService;
     constructor(userRepo: Repository<UserEntity>, jwtService: JwtService);
+    private ensureDefaultAdminUser;
+    private isPostgresUniqueViolation;
     register(dto: {
         email: string;
         password: string;

@@ -12,7 +12,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.PropertyEntity = void 0;
 const typeorm_1 = require("typeorm");
 const property_image_entity_1 = require("./property-image.entity");
-const LISTING_EXPIRES_AT_TYPE = process.env.DATABASE_TYPE === 'postgres' ? 'timestamp' : 'datetime';
 let PropertyEntity = class PropertyEntity {
 };
 exports.PropertyEntity = PropertyEntity;
@@ -209,7 +208,7 @@ __decorate([
     __metadata("design:type", Boolean)
 ], PropertyEntity.prototype, "fraudFlag", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ name: 'listing_expires_at', type: LISTING_EXPIRES_AT_TYPE, nullable: true }),
+    (0, typeorm_1.Column)({ name: 'listing_expires_at', type: 'timestamp', nullable: true }),
     __metadata("design:type", Object)
 ], PropertyEntity.prototype, "listingExpiresAt", void 0);
 __decorate([

@@ -61,7 +61,7 @@ export default function LoginPage() {
   };
 
   const explainNetwork = () =>
-    `Cannot reach API at ${apiBaseDisplay()}. Start the Nest API and ensure NEXT_PUBLIC_API_URL matches it, then run npm run seed:data if needed, or use Generate demo data on the Properties page.`;
+    `Cannot reach API at ${apiBaseDisplay()}. Start the Nest API, set NEXT_PUBLIC_API_URL to match it, and ensure the API has DATABASE_URL (PostgreSQL / Supabase) in apps/api/.env.`;
 
   function messageFromLoginError(err: unknown): string {
     if (err instanceof TypeError) return explainNetwork();
@@ -78,9 +78,6 @@ export default function LoginPage() {
     return 'Invalid credentials';
   }
 
-  const explainSeed = () =>
-    'No admin user or wrong DB file. From the repo root run: npm run seed:data — then restart the API so it loads the same real-estate.db. Password: admin123';
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -91,7 +88,7 @@ export default function LoginPage() {
         toast.error('Cannot reach API');
       } else {
         const msg = messageFromLoginError(err);
-        setError(msg === 'Invalid credentials' ? `${msg}. ${explainSeed()}` : msg);
+        setError(msg);
         toast.error('Login failed');
       }
     }
@@ -105,7 +102,7 @@ export default function LoginPage() {
       await signIn(DEMO_EMAIL, DEMO_PASSWORD);
     } catch (err) {
       if (err instanceof TypeError) setError(explainNetwork());
-      else setError(`${messageFromLoginError(err)}. ${explainSeed()}`);
+      else setError(messageFromLoginError(err));
     }
   };
 

@@ -5,6 +5,7 @@
     "build": "nest build",
     "dev": "nest start --watch",
     "start": "node dist/main",
+    "start:prod": "node dist/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\"",
     "typeorm": "typeorm-ts-node-commonjs"
   },
@@ -27,6 +28,7 @@
     "pg": "^8.11.3",
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.1",
+    "@supabase/supabase-js": "^2.49.1",
     "typeorm": "^0.3.17"
   },
   "devDependencies": {

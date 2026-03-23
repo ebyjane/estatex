@@ -8,12 +8,28 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.HealthController = void 0;
 const common_1 = require("@nestjs/common");
+const typeorm_1 = require("@nestjs/typeorm");
+const typeorm_2 = require("typeorm");
 let HealthController = class HealthController {
-    check() {
-        return { ok: true, service: 'api', ts: new Date().toISOString() };
+    constructor(ds) {
+        this.ds = ds;
+    }
+    async check() {
+        try {
+            if (this.ds.isInitialized) {
+                await this.ds.query('SELECT 1');
+            }
+        }
+        catch (e) {
+            console.error('Health DB ping failed:', e);
+        }
+        return { status: 'ok' };
     }
 };
 exports.HealthController = HealthController;
@@ -21,9 +37,11 @@ __decorate([
     (0, common_1.Get)(),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
-    __metadata("design:returntype", void 0)
+    __metadata("design:returntype", Promise)
 ], HealthController.prototype, "check", null);
 exports.HealthController = HealthController = __decorate([
-    (0, common_1.Controller)('health')
+    (0, common_1.Controller)('health'),
+    __param(0, (0, typeorm_1.InjectDataSource)()),
+    __metadata("design:paramtypes", [typeorm_2.DataSource])
 ], HealthController);
 //# sourceMappingURL=health.controller.js.map

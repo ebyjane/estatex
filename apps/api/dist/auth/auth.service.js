@@ -19,10 +19,39 @@ const typeorm_1 = require("@nestjs/typeorm");
 const typeorm_2 = require("typeorm");
 const bcrypt = require("bcrypt");
 const user_entity_1 = require("../entities/user.entity");
+const DEFAULT_ADMIN_EMAIL = 'admin@estatex.ai';
 let AuthService = class AuthService {
     constructor(userRepo, jwtService) {
         this.userRepo = userRepo;
         this.jwtService = jwtService;
+    }
+    async ensureDefaultAdminUser() {
+        const existing = await this.userRepo.findOne({
+            where: { email: DEFAULT_ADMIN_EMAIL },
+        });
+        if (existing)
+            return;
+        const plain = process.env.ADMIN_BOOTSTRAP_PASSWORD?.trim() || 'admin123';
+        const hash = await bcrypt.hash(plain, 10);
+        const admin = this.userRepo.create({
+            email: DEFAULT_ADMIN_EMAIL,
+            passwordHash: hash,
+            firstName: 'Admin',
+            role: 'admin',
+        });
+        try {
+            await this.userRepo.save(admin);
+        }
+        catch (e) {
+            if (!this.isPostgresUniqueViolation(e))
+                throw e;
+        }
+    }
+    isPostgresUniqueViolation(err) {
+        if (!(err instanceof typeorm_2.QueryFailedError))
+            return false;
+        const code = err.driverError?.code;
+        return code === '23505';
     }
     async register(dto) {
         const existing = await this.userRepo.findOne({ where: { email: dto.email } });
@@ -44,7 +73,13 @@ let AuthService = class AuthService {
     async login(email, password) {
         if (!email || !password)
             throw new common_1.UnauthorizedException('Invalid credentials');
-        const user = await this.userRepo.findOne({ where: { email } });
+        const emailTrim = email.trim();
+        const isAdminLogin = emailTrim.toLowerCase() === DEFAULT_ADMIN_EMAIL.toLowerCase();
+        if (isAdminLogin)
+            await this.ensureDefaultAdminUser();
+        const user = await this.userRepo.findOne({
+            where: isAdminLogin ? { email: DEFAULT_ADMIN_EMAIL } : { email: emailTrim },
+        });
         if (!user || !user.passwordHash)
             throw new common_1.UnauthorizedException('Invalid credentials');
         if (user.accountStatus === 'blocked')

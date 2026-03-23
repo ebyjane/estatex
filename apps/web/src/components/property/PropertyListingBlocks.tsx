@@ -115,7 +115,14 @@ export function PropertyGrid({
   /** If set, cards at or after this index play a short staggered fade-in (infinite-scroll batches). */
   staggerFromIndex?: number;
 }) {
-  const ordered = [...properties].sort((a, b) => Number(!!b.isFeatured) - Number(!!a.isFeatured));
+  const seen = new Set<string>();
+  const unique: ListingProperty[] = [];
+  for (const p of properties) {
+    if (seen.has(p.id)) continue;
+    seen.add(p.id);
+    unique.push(p);
+  }
+  const ordered = [...unique].sort((a, b) => Number(!!b.isFeatured) - Number(!!a.isFeatured));
   return (
     <div className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
       {ordered.map((p, idx) => (

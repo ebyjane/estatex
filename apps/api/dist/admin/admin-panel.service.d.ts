@@ -5,16 +5,22 @@ import { LeadEntity } from '../entities/lead.entity';
 import { SeoPageEntity } from '../entities/seo-page.entity';
 import { AppSettingsEntity } from '../entities/app-settings.entity';
 import { PropertyImageEntity } from '../entities/property-image.entity';
+import { InvestmentEntity } from '../entities/investment.entity';
+import { DemoSeedService } from './demo-seed.service';
 export declare class AdminPanelService {
+    private readonly demoSeed;
     private readonly props;
     private readonly users;
     private readonly leads;
     private readonly seo;
     private readonly settingsRepo;
     private readonly images;
+    private readonly investments;
     private readonly log;
     private ingestionLog;
-    constructor(props: Repository<PropertyEntity>, users: Repository<UserEntity>, leads: Repository<LeadEntity>, seo: Repository<SeoPageEntity>, settingsRepo: Repository<AppSettingsEntity>, images: Repository<PropertyImageEntity>);
+    constructor(demoSeed: DemoSeedService, props: Repository<PropertyEntity>, users: Repository<UserEntity>, leads: Repository<LeadEntity>, seo: Repository<SeoPageEntity>, settingsRepo: Repository<AppSettingsEntity>, images: Repository<PropertyImageEntity>, investments: Repository<InvestmentEntity>);
+    private safeEnsureDemoCatalog;
+    private safeExec;
     pushIngestion(action: string, detail: string): void;
     getIngestionLogs(): {
         at: string;
@@ -22,12 +28,46 @@ export declare class AdminPanelService {
         detail: string;
     }[];
     ensureSettingsRow(): Promise<AppSettingsEntity>;
+    fallbackOverviewResponse(): {
+        totalProperties: number;
+        activeListings: number;
+        pendingListings: number;
+        activeUsers: number;
+        totalLeads: number;
+        totalInvestments: number;
+        revenue: number;
+        revenueNote: string;
+        avgYield: number;
+        undervaluedListings: number;
+        charts: {
+            listingsGrowth: {
+                date: string;
+                count: number;
+            }[];
+            cityDistribution: {
+                city: string;
+                count: number;
+            }[];
+            listingTypeSplit: {
+                type: string;
+                count: number;
+            }[];
+        };
+    };
+    fallbackPropertiesList(page?: number): {
+        data: never[];
+        page: number;
+        total: number;
+        hasMore: boolean;
+    };
+    private emptyOverview;
     overview(): Promise<{
         totalProperties: number;
         activeListings: number;
         pendingListings: number;
         activeUsers: number;
         totalLeads: number;
+        totalInvestments: number;
         revenue: number;
         revenueNote: string;
         avgYield: number;
@@ -47,6 +87,8 @@ export declare class AdminPanelService {
             }[];
         };
     }>;
+    private buildAdminPropertyWhere;
+    private mapPropertyAdminRow;
     listProperties(q: {
         page?: number;
         limit?: number;

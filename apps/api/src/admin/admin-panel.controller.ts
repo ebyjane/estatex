@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  Logger,
   Param,
   Patch,
   Post,
@@ -17,14 +18,25 @@ import { AdminPanelService } from './admin-panel.service';
 @Controller('admin')
 @UseGuards(AuthGuard('jwt'), AdminRoleGuard)
 export class AdminPanelController {
+  private readonly log = new Logger(AdminPanelController.name);
+
   constructor(
     private readonly panel: AdminPanelService,
     private readonly properties: PropertiesService,
   ) {}
 
   @Get('overview')
-  overview() {
-    return this.panel.overview();
+  async overview() {
+    try {
+      return await this.panel.overview();
+    } catch (error) {
+      this.log.error('GET admin/overview', error instanceof Error ? error.stack : error);
+      return {
+        ...this.panel.fallbackOverviewResponse(),
+        success: false,
+        message: error instanceof Error ? error.message : 'Overview unavailable',
+      };
+    }
   }
 
   @Get('ingestion-logs')
@@ -39,7 +51,7 @@ export class AdminPanelController {
   }
 
   @Get('properties')
-  listProperties(
+  async listProperties(
     @Query('page') page?: string,
     @Query('limit') limit?: string,
     @Query('city') city?: string,
@@ -49,16 +61,26 @@ export class AdminPanelController {
     @Query('listingType') listingType?: string,
     @Query('status') status?: string,
   ) {
-    return this.panel.listProperties({
-      page: page ? +page : 1,
-      limit: limit ? +limit : 20,
-      city,
-      minPrice: minPrice ? +minPrice : undefined,
-      maxPrice: maxPrice ? +maxPrice : undefined,
-      minAi: minAi ? +minAi : undefined,
-      listingType,
-      status,
-    });
+    const p = page ? +page : 1;
+    try {
+      return await this.panel.listProperties({
+        page: p,
+        limit: limit ? +limit : 20,
+        city,
+        minPrice: minPrice ? +minPrice : undefined,
+        maxPrice: maxPrice ? +maxPrice : undefined,
+        minAi: minAi ? +minAi : undefined,
+        listingType,
+        status,
+      });
+    } catch (error) {
+      this.log.error('GET admin/properties', error instanceof Error ? error.stack : error);
+      return {
+        ...this.panel.fallbackPropertiesList(p),
+        success: false,
+        message: error instanceof Error ? error.message : 'Properties list unavailable',
+      };
+    }
   }
 
   @Get('properties/:id')

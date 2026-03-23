@@ -3,6 +3,7 @@ import { AdminPanelService } from './admin-panel.service';
 export declare class AdminPanelController {
     private readonly panel;
     private readonly properties;
+    private readonly log;
     constructor(panel: AdminPanelService, properties: PropertiesService);
     overview(): Promise<{
         totalProperties: number;
@@ -10,6 +11,34 @@ export declare class AdminPanelController {
         pendingListings: number;
         activeUsers: number;
         totalLeads: number;
+        totalInvestments: number;
+        revenue: number;
+        revenueNote: string;
+        avgYield: number;
+        undervaluedListings: number;
+        charts: {
+            listingsGrowth: {
+                date: string;
+                count: number;
+            }[];
+            cityDistribution: {
+                city: string;
+                count: number;
+            }[];
+            listingTypeSplit: {
+                type: string;
+                count: number;
+            }[];
+        };
+    } | {
+        success: boolean;
+        message: string;
+        totalProperties: number;
+        activeListings: number;
+        pendingListings: number;
+        activeUsers: number;
+        totalLeads: number;
+        totalInvestments: number;
         revenue: number;
         revenueNote: string;
         avgYield: number;
@@ -57,6 +86,13 @@ export declare class AdminPanelController {
             isVerified: boolean;
             createdAt: Date;
         }[];
+        page: number;
+        total: number;
+        hasMore: boolean;
+    } | {
+        success: boolean;
+        message: string;
+        data: never[];
         page: number;
         total: number;
         hasMore: boolean;

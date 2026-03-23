@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, UnauthorizedException, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { IsEmail, IsOptional, IsString, MinLength } from 'class-validator';
 import { AuthService } from './auth.service';
@@ -47,8 +47,20 @@ export class AuthController {
   }
 
   @Post('login')
-  login(@Body() dto: LoginDto) {
-    return this.auth.login(dto.email, dto.password);
+  async login(@Body() dto: LoginDto) {
+    try {
+      return await this.auth.login(dto.email, dto.password);
+    } catch (error) {
+      if (error instanceof UnauthorizedException) throw error;
+      console.error('POST /auth/login', error);
+      return {
+        success: false,
+        data: null,
+        message: error instanceof Error ? error.message : 'Login failed',
+        accessToken: null,
+        user: null,
+      };
+    }
   }
 
   @Get('me')

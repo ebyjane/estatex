@@ -1,4 +1,10 @@
 {
+  "app\\calculator\\CalculatorView.tsx -> ./CalculatorCharts": {
+    "id": "app\\calculator\\CalculatorView.tsx -> ./CalculatorCharts",
+    "files": [
+      "static/chunks/_app-pages-browser_src_app_calculator_CalculatorCharts_tsx.js"
+    ]
+  },
   "app\\properties\\PropertiesView.tsx -> ./PriceTrendChart": {
     "id": "app\\properties\\PropertiesView.tsx -> ./PriceTrendChart",
     "files": [

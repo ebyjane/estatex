@@ -36,7 +36,11 @@ export declare class PropertiesController {
         }[];
         disclaimer: string;
     }>;
-    list(countryId?: string, countryCode?: string, type?: string, listingType?: string, minPrice?: string, maxPrice?: string, minBedrooms?: string, maxBedrooms?: string, city?: string, minLat?: string, maxLat?: string, minLng?: string, maxLng?: string, limit?: string, page?: string, offset?: string, flat?: string, format?: string): Promise<{
+    list(countryId?: string, countryCode?: string, type?: string, listingType?: string, minPrice?: string, maxPrice?: string, minBedrooms?: string, maxBedrooms?: string, city?: string, minLat?: string, maxLat?: string, minLng?: string, maxLng?: string, limit?: string, page?: string, offset?: string, flat?: string, format?: string): Promise<(import("../entities").PropertyEntity & {
+        trustBreakdown: import("./property-public.util").TrustBreakdown;
+        trustScore: number;
+        dataCompleteness: number;
+    })[] | {
         data: (import("../entities").PropertyEntity & {
             trustBreakdown: import("./property-public.util").TrustBreakdown;
             trustScore: number;
@@ -50,11 +54,15 @@ export declare class PropertiesController {
         page: number;
         hasMore: boolean;
         total: number;
-    }> | Promise<(import("../entities").PropertyEntity & {
-        trustBreakdown: import("./property-public.util").TrustBreakdown;
-        trustScore: number;
-        dataCompleteness: number;
-    })[]>;
+    } | {
+        success: boolean;
+        data: never[];
+        items: never[];
+        page: number;
+        hasMore: boolean;
+        total: number;
+        message: string;
+    }>;
     submitListing(body: Record<string, unknown>, auth?: string): Promise<(import("../entities").PropertyEntity & {
         trustBreakdown: import("./property-public.util").TrustBreakdown;
         trustScore: number;
