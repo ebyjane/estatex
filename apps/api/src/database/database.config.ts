@@ -1,9 +1,13 @@
-import type { TypeOrmModuleOptions } from '@nestjs/typeorm';
-export function getTypeOrmConfig(): TypeOrmModuleOptions {
+import { TypeOrmModuleOptions } from '@nestjs/typeorm';
+
+export const getDatabaseConfig = (): TypeOrmModuleOptions => {
   return {
     type: 'postgres',
     url: process.env.DATABASE_URL,
     autoLoadEntities: true,
     synchronize: process.env.DATABASE_SYNC === 'true',
+    ssl: {
+      rejectUnauthorized: false,
+    },
   };
-}
+};

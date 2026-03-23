@@ -31,8 +31,7 @@ function buildDataSource(): DataSource {
   const useSsl =
     process.env.DATABASE_SSL === 'true' ||
     !!url?.includes('supabase.co') ||
-    !!url?.includes('neon.tech') ||
-    url?.includes('sslmode=require');
+    !!url?.includes('neon.tech');
 
   return new DataSource({
     type: 'postgres',

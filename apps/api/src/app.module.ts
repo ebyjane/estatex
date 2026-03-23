@@ -14,21 +14,16 @@ import { SeoModule } from './seo/seo.module';
 import { HealthModule } from './health/health.module';
 import { InvestmentsModule } from './investments/investments.module';
 import { SupabaseModule } from './supabase/supabase.module';
-import { getTypeOrmConfig } from './database/database.config';
+import { getDatabaseConfig } from './database/database.config';
 
-const orm = getTypeOrmConfig();
+const orm = getDatabaseConfig();
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     HealthModule,
     SupabaseModule,
-    TypeOrmModule.forRoot({
-      ...orm,
-      synchronize:
-        process.env.DATABASE_SYNC === 'true' ||
-        (process.env.NODE_ENV !== 'production' && process.env.DATABASE_SYNC !== 'false'),
-    }),
+    TypeOrmModule.forRoot({ ...orm }),
     AiModule,
     AdminModule,
     SeoModule,
