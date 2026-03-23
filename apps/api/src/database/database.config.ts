@@ -3,12 +3,6 @@ export function getTypeOrmConfig(): TypeOrmModuleOptions {
   return {
     type: 'postgres',
     url: process.env.DATABASE_URL,
-    ssl: true,
-    extra: {
-      ssl: {
-        rejectUnauthorized: false,
-      },
-    },
     autoLoadEntities: true,
     synchronize: process.env.DATABASE_SYNC === 'true',
   };
