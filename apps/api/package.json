@@ -4,8 +4,8 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "dev": "nest start --watch",
-    "start": "node dist/main",
-    "start:prod": "node dist/main",
+    "start": "node dist/main.js",
+    "start:prod": "node dist/main.js",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\"",
     "typeorm": "typeorm-ts-node-commonjs"
   },
