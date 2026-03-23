@@ -106,7 +106,7 @@ export class PropertyEntity {
   @Column({ name: 'reject_reason', type: 'text', nullable: true })
   rejectReason: string | null;
 
-  @Column({ name: 'ai_value_score', nullable: true })
+  @Column({ name: 'ai_value_score', type: 'decimal', precision: 5, scale: 2, nullable: true })
   aiValueScore: number;
 
   @Column({ name: 'ai_price_suggestion', type: 'decimal', precision: 18, scale: 2, nullable: true })
