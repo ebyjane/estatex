@@ -24,7 +24,7 @@ const health_module_1 = require("./health/health.module");
 const investments_module_1 = require("./investments/investments.module");
 const supabase_module_1 = require("./supabase/supabase.module");
 const database_config_1 = require("./database/database.config");
-const orm = (0, database_config_1.getTypeOrmConfig)();
+const orm = (0, database_config_1.getDatabaseConfig)();
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -34,11 +34,7 @@ exports.AppModule = AppModule = __decorate([
             config_1.ConfigModule.forRoot({ isGlobal: true }),
             health_module_1.HealthModule,
             supabase_module_1.SupabaseModule,
-            typeorm_1.TypeOrmModule.forRoot({
-                ...orm,
-                synchronize: process.env.DATABASE_SYNC === 'true' ||
-                    (process.env.NODE_ENV !== 'production' && process.env.DATABASE_SYNC !== 'false'),
-            }),
+            typeorm_1.TypeOrmModule.forRoot({ ...orm }),
             ai_module_1.AiModule,
             admin_module_1.AdminModule,
             seo_module_1.SeoModule,
