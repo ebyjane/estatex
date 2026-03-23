@@ -36,9 +36,10 @@ async function bootstrap() {
   });
   app.setGlobalPrefix('api/v1');
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
-  const PORT = Number(process.env.PORT) || 8000;
-  await app.listen(PORT);
-  console.log('Server running on port', PORT);
+  const PORT = process.env.PORT || 8000;
+  await app.listen(PORT, () => {
+    console.log('Server running on port', PORT);
+  });
   console.log(`API base: http://localhost:${PORT}/api/v1`);
 }
 bootstrap();
