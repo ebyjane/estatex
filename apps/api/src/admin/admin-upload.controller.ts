@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { FilesInterceptor } from '@nestjs/platform-express';
-import { Express } from 'express';
+import { Express, Request } from 'express';
 import { diskStorage } from 'multer';
 import { randomUUID } from 'crypto';
 import { extname, join } from 'path';
@@ -44,17 +44,17 @@ export class AdminUploadController {
   @UseInterceptors(
     FilesInterceptor('files', 80, {
       storage: diskStorage({
-        destination: (_req, _file, cb) => {
+        destination: (_req: Request, _file, cb) => {
           cb(null, ensureUploadDir());
         },
-        filename: (_req, file, cb) => {
+        filename: (_req: Request, file, cb) => {
           const raw = extname(file.originalname || '').toLowerCase();
           const ext = /^\.[a-z0-9]{1,8}$/.test(raw) ? raw : mimeToExt(file.mimetype);
           cb(null, `${randomUUID()}${ext}`);
         },
       }),
       limits: { fileSize: 120 * 1024 * 1024 },
-      fileFilter: (_req, file, cb) => {
+      fileFilter: (_req: Request, file, cb) => {
         const ok = file.mimetype.startsWith('image/') || file.mimetype.startsWith('video/');
         cb(null, ok);
       },
