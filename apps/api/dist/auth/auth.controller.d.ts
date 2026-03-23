@@ -32,7 +32,7 @@ export declare class AuthController {
             createdAt: Date;
             updatedAt: Date;
         };
-        accessToken: string;
+        accessToken: any;
         expiresIn: number;
     }>;
     login(dto: LoginDto): Promise<{
@@ -53,7 +53,7 @@ export declare class AuthController {
             createdAt: Date;
             updatedAt: Date;
         };
-        accessToken: string;
+        accessToken: any;
         expiresIn: number;
     } | {
         success: boolean;

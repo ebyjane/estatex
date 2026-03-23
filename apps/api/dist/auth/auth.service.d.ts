@@ -32,7 +32,7 @@ export declare class AuthService {
             createdAt: Date;
             updatedAt: Date;
         };
-        accessToken: string;
+        accessToken: any;
         expiresIn: number;
     }>;
     login(email: string, password: string): Promise<{
@@ -53,7 +53,7 @@ export declare class AuthService {
             createdAt: Date;
             updatedAt: Date;
         };
-        accessToken: string;
+        accessToken: any;
         expiresIn: number;
     }>;
     validateUser(id: string): Promise<UserEntity | null>;
