@@ -13,6 +13,7 @@
     "@nestjs/jwt": "^10.2.0",
     "@nestjs/passport": "^10.0.3",
     "@nestjs/platform-express": "^11.1.17",
+    "@nestjs/swagger": "^11.2.6",
     "@nestjs/typeorm": "^11.0.0",
     "@real-estate/shared": "file:../../packages/shared",
     "@supabase/supabase-js": "^2.49.1",
@@ -28,6 +29,7 @@
     "pg": "^8.11.3",
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.1",
+    "swagger-ui-express": "^5.0.1",
     "typeorm": "^0.3.17"
   },
   "devDependencies": {
