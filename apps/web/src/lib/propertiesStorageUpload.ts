@@ -8,10 +8,10 @@ function safeFileSegment(name: string): string {
 }
 
 /**
- * Upload listing media to Supabase Storage `properties` bucket and return public URLs.
- * Requires bucket to exist and public read (or use signed URLs separately).
+ * Upload each file immediately to Storage `properties` and return public URLs.
+ * Paths: `images/${Date.now()}-{i}-{safeName}` / `videos/...` so multi-select stays unique.
  */
-export async function uploadPropertyMediaToSupabase(
+export async function uploadListingFilesToPropertiesBucket(
   files: File[],
   kind: 'image' | 'video',
 ): Promise<string[]> {
@@ -19,10 +19,12 @@ export async function uploadPropertyMediaToSupabase(
   const supabase = getSupabaseBrowserClient();
   const folder = kind === 'image' ? 'images' : 'videos';
   const urls: string[] = [];
+  const ts = Date.now();
 
-  for (const file of files) {
-    const path = `${folder}/${crypto.randomUUID()}/${safeFileSegment(file.name)}`;
-    const { data, error } = await supabase.storage.from(PROPERTIES_STORAGE_BUCKET).upload(path, file, {
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    const objectPath = `${folder}/${ts}-${i}-${safeFileSegment(file.name)}`;
+    const { data, error } = await supabase.storage.from(PROPERTIES_STORAGE_BUCKET).upload(objectPath, file, {
       cacheControl: '3600',
       upsert: false,
       contentType: file.type || undefined,
@@ -30,8 +32,8 @@ export async function uploadPropertyMediaToSupabase(
     if (error) {
       throw new Error(error.message || 'Storage upload failed');
     }
-    const { data: pub } = supabase.storage.from(PROPERTIES_STORAGE_BUCKET).getPublicUrl(data.path);
-    urls.push(pub.publicUrl);
+    const { data: publicUrl } = supabase.storage.from(PROPERTIES_STORAGE_BUCKET).getPublicUrl(data.path);
+    urls.push(publicUrl.publicUrl);
   }
 
   return urls;

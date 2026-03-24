@@ -8,7 +8,7 @@ import { CheckCircle2, ChevronLeft, ChevronRight, Home, Loader2, ShieldCheck, Sp
 import toast from 'react-hot-toast';
 import { coerceOptionalLatLng } from '@/lib/geo';
 import { fetchApi } from '@/lib/api';
-import { uploadPropertyMediaToSupabase } from '@/lib/propertiesStorageUpload';
+import { uploadListingFilesToPropertiesBucket } from '@/lib/propertiesStorageUpload';
 import { isSupabaseBrowserConfigured } from '@/lib/supabase-browser';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { LocationMapPicker } from './LocationMapPicker';
@@ -213,13 +213,6 @@ function parseImageUrls(text: string, max = 24): string[] {
   return splitHttpUrls(text).slice(0, max);
 }
 
-function appendUrlLines(current: string, urls: string[]): string {
-  const next = urls.filter(Boolean);
-  if (!next.length) return current;
-  const base = current.trim();
-  return base ? `${base}\n${next.join('\n')}` : next.join('\n');
-}
-
 /** Plain numbers, commas/spaces, or Indian units (crore/lakh). */
 function parseMoneyInput(raw: string): number | null {
   const s = raw.trim();
@@ -370,15 +363,16 @@ export function PostPropertyWizard({ editQuery: editQueryProp = '' }: { editQuer
   }, []);
 
   const uploadMediaFromPicker = useCallback(
-    async (files: FileList | null, kind: 'image' | 'video') => {
-      if (!files?.length) return;
+    async (picked: FileList | File[] | null, kind: 'image' | 'video') => {
+      const filesArr = picked ? (Array.isArray(picked) ? picked : Array.from(picked)) : [];
+      if (!filesArr.length) return;
       if (!isSupabaseBrowserConfigured()) {
         toast.error(
           'Supabase is not configured. Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY, create the `properties` bucket, and allow uploads.',
         );
         return;
       }
-      let list = Array.from(files).filter((f) =>
+      let list = filesArr.filter((f) =>
         kind === 'image' ? f.type.startsWith('image/') : f.type.startsWith('video/'),
       );
       if (!list.length) {
@@ -386,28 +380,32 @@ export function PostPropertyWizard({ editQuery: editQueryProp = '' }: { editQuer
         return;
       }
       if (!isAdmin && kind === 'video' && list.length > 1) {
-        toast('Public listings use one video URL — uploading the first file only.');
+        toast('Public listings use one video — uploading the first file only.');
         list = list.slice(0, 1);
       }
       setUploadBusy(true);
       try {
-        const urls = await uploadPropertyMediaToSupabase(list, kind);
+        const urls = await uploadListingFilesToPropertiesBucket(list, kind);
         if (kind === 'image') {
-          setDraft((d) => ({ ...d, imageUrlsText: appendUrlLines(d.imageUrlsText, urls) }));
+          setDraft((d) => {
+            let next = d.imageUrlsText;
+            for (const u of urls) {
+              next = next.trim() ? `${next.trim()}\n${u}` : u;
+            }
+            return { ...d, imageUrlsText: next };
+          });
         } else if (isAdmin) {
-          setDraft((d) => ({ ...d, videoUrlsText: appendUrlLines(d.videoUrlsText, urls) }));
+          setDraft((d) => {
+            let next = d.videoUrlsText;
+            for (const u of urls) {
+              next = next.trim() ? `${next.trim()}\n${u}` : u;
+            }
+            return { ...d, videoUrlsText: next };
+          });
         } else {
           const first = urls[0];
           if (!first) return;
-          let applied = false;
-          setDraft((d) => {
-            if (!d.videoUrl.trim()) {
-              applied = true;
-              return { ...d, videoUrl: first };
-            }
-            return d;
-          });
-          if (!applied) toast.error('Clear the video URL field to replace it with an upload.');
+          setDraft((d) => ({ ...d, videoUrl: first }));
         }
         toast.success(`Uploaded ${urls.length} file(s) to Supabase`);
       } catch (e) {
@@ -495,6 +493,11 @@ export function PostPropertyWizard({ editQuery: editQueryProp = '' }: { editQuer
         return;
       }
       const imageUrls = isAdmin ? splitHttpUrls(draft.imageUrlsText) : parseImageUrls(draft.imageUrlsText, 500);
+      const videoUrls = isAdmin
+        ? splitHttpUrls(draft.videoUrlsText)
+        : draft.videoUrl.trim()
+          ? [draft.videoUrl.trim()]
+          : [];
       const coordResult = coerceOptionalLatLng(
         draft.latitude.trim() === '' ? '' : draft.latitude,
         draft.longitude.trim() === '' ? '' : draft.longitude,
@@ -553,13 +556,8 @@ export function PostPropertyWizard({ editQuery: editQueryProp = '' }: { editQuer
           imageUrls: imageUrls.length ? imageUrls : undefined,
         };
         if (draft.primaryImageUrl.trim()) body.primaryImageUrl = draft.primaryImageUrl.trim();
-        if (isAdmin) {
-          const vids = splitHttpUrls(draft.videoUrlsText);
-          if (vids.length) body.videoUrls = vids;
-          if (draft.primaryVideoUrl.trim()) body.primaryVideoUrl = draft.primaryVideoUrl.trim();
-        } else {
-          body.videoUrl = draft.videoUrl.trim() || undefined;
-        }
+        if (videoUrls.length) body.videoUrls = videoUrls;
+        if (draft.primaryVideoUrl.trim()) body.primaryVideoUrl = draft.primaryVideoUrl.trim();
         if (draft.listingType === 'sale' && draft.expectedRentMonthly.trim()) {
           const er = parseMoneyInput(draft.expectedRentMonthly);
           if (er != null) body.expectedRentMonthly = er;
@@ -617,13 +615,8 @@ export function PostPropertyWizard({ editQuery: editQueryProp = '' }: { editQuer
         imageUrls: imageUrls.length ? imageUrls : undefined,
       };
       if (draft.primaryImageUrl.trim()) body.primaryImageUrl = draft.primaryImageUrl.trim();
-      if (isAdmin) {
-        const vids = splitHttpUrls(draft.videoUrlsText);
-        if (vids.length) body.videoUrls = vids;
-        if (draft.primaryVideoUrl.trim()) body.primaryVideoUrl = draft.primaryVideoUrl.trim();
-      } else {
-        body.videoUrl = draft.videoUrl.trim() || undefined;
-      }
+      if (videoUrls.length) body.videoUrls = videoUrls;
+      if (draft.primaryVideoUrl.trim()) body.primaryVideoUrl = draft.primaryVideoUrl.trim();
       if (draft.listingType === 'sale' && draft.expectedRentMonthly.trim()) {
         const er = parseMoneyInput(draft.expectedRentMonthly);
         if (er != null) body.expectedRentMonthly = er;
@@ -1069,9 +1062,10 @@ export function PostPropertyWizard({ editQuery: editQueryProp = '' }: { editQuer
         {step === 6 && (
           <div className="space-y-4">
             <p className="text-sm text-slate-400">
-              Paste URLs below and/or upload files — uploads go to your Supabase Storage bucket{' '}
-              <code className="text-cyan-400/90">properties</code>; public URLs are saved in this form and sent as JSON
-              when you submit. Configure <code className="text-slate-500">NEXT_PUBLIC_SUPABASE_URL</code> and{' '}
+              Paste URLs or use Add images / Add videos — each file uploads immediately to Supabase bucket{' '}
+              <code className="text-cyan-400/90">properties</code>, and the public URL is appended below. Submit sends
+              only <code className="text-slate-500">imageUrls</code> and <code className="text-slate-500">videoUrls</code>{' '}
+              (JSON). Set <code className="text-slate-500">NEXT_PUBLIC_SUPABASE_URL</code> and{' '}
               <code className="text-slate-500">NEXT_PUBLIC_SUPABASE_ANON_KEY</code>.
             </p>
             <div className="flex flex-wrap items-center gap-3 rounded-xl border border-white/15 bg-white/5 px-4 py-3">
@@ -1086,8 +1080,9 @@ export function PostPropertyWizard({ editQuery: editQueryProp = '' }: { editQuer
                   className="sr-only"
                   disabled={uploadBusy}
                   onChange={(e) => {
-                    void uploadMediaFromPicker(e.target.files, 'image');
+                    const batch = e.target.files?.length ? Array.from(e.target.files) : [];
                     e.target.value = '';
+                    void uploadMediaFromPicker(batch, 'image');
                   }}
                 />
                 Add images
@@ -1102,8 +1097,9 @@ export function PostPropertyWizard({ editQuery: editQueryProp = '' }: { editQuer
                   className="sr-only"
                   disabled={uploadBusy}
                   onChange={(e) => {
-                    void uploadMediaFromPicker(e.target.files, 'video');
+                    const batch = e.target.files?.length ? Array.from(e.target.files) : [];
                     e.target.value = '';
+                    void uploadMediaFromPicker(batch, 'video');
                   }}
                 />
                 Add videos
@@ -1127,6 +1123,20 @@ export function PostPropertyWizard({ editQuery: editQueryProp = '' }: { editQuer
                   <img key={url} src={url} alt="" className="h-24 w-full rounded-lg border border-white/10 object-cover" />
                 ))}
             </div>
+            {imageUrlChoices.length > 0 && (
+              <div className="rounded-lg border border-white/10 bg-slate-900/50 p-3">
+                <p className="mb-2 text-xs font-medium text-slate-400">Image URLs ({imageUrlChoices.length})</p>
+                <ul className="max-h-40 space-y-1 overflow-y-auto font-mono text-[11px] text-cyan-300/90">
+                  {imageUrlChoices.map((url) => (
+                    <li key={url} className="break-all">
+                      <a href={url} target="_blank" rel="noopener noreferrer" className="hover:underline">
+                        {url}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
             {isAdmin ? (
               <label className="block">
                 <span className="text-xs font-medium text-slate-400">Video URLs (one per line, optional)</span>
@@ -1142,11 +1152,25 @@ export function PostPropertyWizard({ editQuery: editQueryProp = '' }: { editQuer
                 <span className="text-xs font-medium text-slate-400">Video URL (optional)</span>
                 <input
                   className="mt-1 w-full rounded-lg border border-white/10 bg-slate-900 px-3 py-2 text-white"
-                  placeholder="https://…"
+                  placeholder="https://… or upload one video above"
                   value={draft.videoUrl}
                   onChange={(e) => setField('videoUrl', e.target.value)}
                 />
               </label>
+            )}
+            {videoUrlChoices.length > 0 && (
+              <div className="rounded-lg border border-white/10 bg-slate-900/50 p-3">
+                <p className="mb-2 text-xs font-medium text-slate-400">Video URLs ({videoUrlChoices.length})</p>
+                <ul className="max-h-32 space-y-1 overflow-y-auto font-mono text-[11px] text-violet-300/90">
+                  {videoUrlChoices.map((url) => (
+                    <li key={url} className="break-all">
+                      <a href={url} target="_blank" rel="noopener noreferrer" className="hover:underline">
+                        {url}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             )}
             {imageUrlChoices.length >= 2 && (
               <label className="block">

@@ -152,12 +152,12 @@ let PropertiesService = PropertiesService_1 = class PropertiesService {
         const ltRaw = String(dto.listingType || 'sale').toLowerCase();
         const listingType = ['rent', 'sale', 'pg', 'flatmates'].includes(ltRaw) ? ltRaw : 'sale';
         const singleVideo = dto.videoUrl != null ? String(dto.videoUrl).trim() : '';
-        const multiVideos = allowMultiVideo && Array.isArray(dto.videoUrls)
+        const fromVideoUrls = Array.isArray(dto.videoUrls)
             ? dto.videoUrls.map((v) => String(v).trim()).filter(Boolean)
             : [];
         let orderedVideos = [];
         if (allowMultiVideo) {
-            orderedVideos = [...multiVideos];
+            orderedVideos = [...fromVideoUrls];
             if (singleVideo && !orderedVideos.includes(singleVideo))
                 orderedVideos.unshift(singleVideo);
             if (!orderedVideos.length && singleVideo)
@@ -165,6 +165,9 @@ let PropertiesService = PropertiesService_1 = class PropertiesService {
         }
         else if (singleVideo) {
             orderedVideos = [singleVideo];
+        }
+        else if (fromVideoUrls.length) {
+            orderedVideos = [fromVideoUrls[0]];
         }
         const primaryVid = dto.primaryVideoUrl != null ? String(dto.primaryVideoUrl).trim() : '';
         orderedVideos = moveUrlFirst(orderedVideos, primaryVid || undefined);
@@ -387,19 +390,32 @@ let PropertiesService = PropertiesService_1 = class PropertiesService {
         }
         if (dto.videoUrl !== undefined || dto.videoUrls !== undefined || dto.primaryVideoUrl !== undefined) {
             const singleVideo = dto.videoUrl != null ? String(dto.videoUrl).trim() : '';
-            const multiVideos = allowMultiVideo && Array.isArray(dto.videoUrls)
+            const fromVideoUrls = dto.videoUrls !== undefined && Array.isArray(dto.videoUrls)
                 ? dto.videoUrls.map((v) => String(v).trim()).filter(Boolean)
-                : [];
+                : null;
             let orderedVideos = [];
             if (allowMultiVideo) {
-                orderedVideos = [...multiVideos];
-                if (singleVideo && !orderedVideos.includes(singleVideo))
-                    orderedVideos.unshift(singleVideo);
-                if (!orderedVideos.length && singleVideo)
-                    orderedVideos = [singleVideo];
+                if (fromVideoUrls !== null) {
+                    orderedVideos = [...fromVideoUrls];
+                    if (dto.videoUrl !== undefined) {
+                        if (singleVideo && !orderedVideos.includes(singleVideo))
+                            orderedVideos.unshift(singleVideo);
+                        if (!orderedVideos.length && singleVideo)
+                            orderedVideos = [singleVideo];
+                    }
+                }
+                else if (dto.videoUrl !== undefined) {
+                    orderedVideos = singleVideo ? [singleVideo] : [];
+                }
+                else {
+                    orderedVideos = p.videoUrls?.length ? [...p.videoUrls] : p.videoUrl ? [String(p.videoUrl)] : [];
+                }
             }
             else if (dto.videoUrl !== undefined) {
                 orderedVideos = singleVideo ? [singleVideo] : [];
+            }
+            else if (fromVideoUrls !== null) {
+                orderedVideos = fromVideoUrls.length ? [fromVideoUrls[0]] : [];
             }
             else {
                 orderedVideos = p.videoUrls?.length ? [...p.videoUrls] : p.videoUrl ? [String(p.videoUrl)] : [];
