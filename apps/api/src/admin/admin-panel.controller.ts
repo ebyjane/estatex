@@ -8,17 +8,10 @@ import {
   Patch,
   Post,
   Query,
-  UploadedFiles,
   UseGuards,
-  UseInterceptors,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import type { Express } from 'express';
 import { AdminRoleGuard } from '../auth/guards/admin-role.guard';
-import {
-  buildListingDtoFromMultipart,
-  createSubmitListingFileInterceptor,
-} from '../properties/listing-multipart.util';
 import { PropertiesService } from '../properties/properties.service';
 import { AdminPanelService } from './admin-panel.service';
 
@@ -184,33 +177,9 @@ export class AdminPanelController {
     return this.panel.patchSettings(body);
   }
 
-  /** Same fields as public submit-listing; multipart with optional `images` / `videos` files. */
+  /** Same JSON payload as public submit-listing; media URLs come from client (e.g. Supabase Storage). */
   @Post('submit-listing')
-  @UseInterceptors(createSubmitListingFileInterceptor(500, 80))
-  submitListing(
-    @UploadedFiles() files: { images?: Express.Multer.File[]; videos?: Express.Multer.File[] },
-    @Body() body: Record<string, string | string[]>,
-  ) {
-    console.log('[POST /api/v1/admin/submit-listing] multipart field keys:', Object.keys(body ?? {}));
-    console.log(
-      '[POST /api/v1/admin/submit-listing] files:',
-      JSON.stringify({
-        images: files?.images?.map((f) => ({
-          originalname: f.originalname,
-          size: f.size,
-          mimetype: f.mimetype,
-        })),
-        videos: files?.videos?.map((f) => ({
-          originalname: f.originalname,
-          size: f.size,
-          mimetype: f.mimetype,
-        })),
-      }),
-    );
-    const dto = buildListingDtoFromMultipart(body, files ?? {}, {
-      maxImages: 500,
-      allowMultiVideo: true,
-    });
-    return this.properties.submitPublicListing(dto, { maxImages: 500, allowMultiVideo: true });
+  submitListing(@Body() body: Record<string, unknown>) {
+    return this.properties.submitPublicListing(body, { maxImages: 500, allowMultiVideo: true });
   }
 }

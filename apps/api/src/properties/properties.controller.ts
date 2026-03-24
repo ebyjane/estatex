@@ -1,22 +1,8 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Headers,
-  Param,
-  Patch,
-  Post,
-  Query,
-  UploadedFiles,
-  UseGuards,
-  UseInterceptors,
-} from '@nestjs/common';
+import { Body, Controller, Get, Headers, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { JwtService } from '@nestjs/jwt';
-import type { Express } from 'express';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { AiService } from './ai.service';
-import { buildListingDtoFromMultipart, createSubmitListingFileInterceptor } from './listing-multipart.util';
 import { PropertiesService } from './properties.service';
 
 @Controller('properties')
@@ -115,12 +101,7 @@ export class PropertiesController {
   }
 
   @Post('submit-listing')
-  @UseInterceptors(createSubmitListingFileInterceptor(24, 20))
-  submitListing(
-    @UploadedFiles() files: { images?: Express.Multer.File[]; videos?: Express.Multer.File[] },
-    @Body() body: Record<string, string | string[]>,
-    @Headers('authorization') auth?: string,
-  ) {
+  submitListing(@Body() body: Record<string, unknown>, @Headers('authorization') auth?: string) {
     let ownerUserId: string | undefined;
     if (auth?.startsWith('Bearer ')) {
       try {
@@ -130,27 +111,7 @@ export class PropertiesController {
         /* anonymous submit */
       }
     }
-    console.log('[POST /api/v1/properties/submit-listing] multipart field keys:', Object.keys(body ?? {}));
-    console.log(
-      '[POST /api/v1/properties/submit-listing] files:',
-      JSON.stringify({
-        images: files?.images?.map((f) => ({
-          originalname: f.originalname,
-          size: f.size,
-          mimetype: f.mimetype,
-        })),
-        videos: files?.videos?.map((f) => ({
-          originalname: f.originalname,
-          size: f.size,
-          mimetype: f.mimetype,
-        })),
-      }),
-    );
-    const dto = buildListingDtoFromMultipart(body, files ?? {}, {
-      maxImages: 24,
-      allowMultiVideo: false,
-    });
-    return this.service.submitPublicListing(dto, { ownerUserId });
+    return this.service.submitPublicListing(body, { ownerUserId });
   }
 
   @Get(':id/can-edit')
