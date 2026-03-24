@@ -10,6 +10,11 @@ const getDatabaseConfig = () => {
         ssl: {
             rejectUnauthorized: false,
         },
+        extra: {
+            ssl: {
+                rejectUnauthorized: false,
+            },
+        },
     };
 };
 exports.getDatabaseConfig = getDatabaseConfig;
