@@ -3,13 +3,13 @@ process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import { DataSource } from 'typeorm';
 import { join } from 'path';
 import * as fs from 'fs';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
+
   const expressApp = app.getHttpAdapter().getInstance();
   expressApp.get('/', (_req: unknown, res: { send: (body: string) => void }) => {
     res.send('API OK');
@@ -17,20 +17,7 @@ async function bootstrap() {
   const uploadRoot = join(process.cwd(), 'uploads');
   fs.mkdirSync(join(uploadRoot, 'listings'), { recursive: true });
   app.useStaticAssets(uploadRoot, { prefix: '/uploads/', index: false });
-  try {
-    const ds = app.get(DataSource);
-    if (ds.isInitialized) {
-      console.log('Connected to DB');
-      const o = ds.options as { url?: string; database?: string };
-      console.log(
-        o.url
-          ? 'DB host: PostgreSQL via DATABASE_URL'
-          : `DB host: PostgreSQL / ${o.database ?? 'default'}`,
-      );
-    }
-  } catch {
-    console.error('DB connection check failed at startup');
-  }
+
   app.enableCors({
     origin: '*',
     credentials: false,
@@ -38,11 +25,12 @@ async function bootstrap() {
   });
   app.setGlobalPrefix('api/v1');
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
-  const PORT = process.env.PORT || 8000;
-  await app.listen(PORT, () => {
-    console.log('Server running on port', PORT);
-  });
-  console.log('API started successfully');
-  console.log(`API base: http://localhost:${PORT}/api/v1`);
+
+  const port = Number(process.env.PORT) || 3000;
+
+  await app.listen(port);
+
+  console.log('🚀 Server running on port:', port);
 }
+
 bootstrap();

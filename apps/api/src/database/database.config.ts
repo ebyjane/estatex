@@ -5,4 +5,6 @@ export const getDatabaseConfig = (): TypeOrmModuleOptions => ({
   url: process.env.DATABASE_URL,
   autoLoadEntities: true,
   synchronize: false,
+  retryAttempts: 15,
+  retryDelay: 3000,
 });

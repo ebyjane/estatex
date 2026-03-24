@@ -6,6 +6,8 @@ const getDatabaseConfig = () => ({
     url: process.env.DATABASE_URL,
     autoLoadEntities: true,
     synchronize: false,
+    retryAttempts: 15,
+    retryDelay: 3000,
 });
 exports.getDatabaseConfig = getDatabaseConfig;
 //# sourceMappingURL=database.config.js.map
