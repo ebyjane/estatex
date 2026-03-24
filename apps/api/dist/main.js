@@ -1,6 +1,5 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 const common_1 = require("@nestjs/common");
 const core_1 = require("@nestjs/core");
 const typeorm_1 = require("typeorm");
@@ -40,6 +39,7 @@ async function bootstrap() {
     await app.listen(PORT, () => {
         console.log('Server running on port', PORT);
     });
+    console.log('API started successfully');
     console.log(`API base: http://localhost:${PORT}/api/v1`);
 }
 bootstrap();

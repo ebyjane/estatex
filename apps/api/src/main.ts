@@ -1,5 +1,3 @@
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
-
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
@@ -42,6 +40,7 @@ async function bootstrap() {
   await app.listen(PORT, () => {
     console.log('Server running on port', PORT);
   });
+  console.log('API started successfully');
   console.log(`API base: http://localhost:${PORT}/api/v1`);
 }
 bootstrap();
