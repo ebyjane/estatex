@@ -1,4 +1,4 @@
-import './config/pg-ssl';
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';

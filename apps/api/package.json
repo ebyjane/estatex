@@ -3,11 +3,7 @@
   "version": "0.1.0",
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
-    "dev": "nest start --watch",
-    "start": "node dist/main.js",
-    "start:prod": "node dist/main.js",
-    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\"",
-    "typeorm": "typeorm-ts-node-commonjs"
+    "start": "node dist/main.js"
   },
   "dependencies": {
     "@nestjs/common": "^11.1.17",

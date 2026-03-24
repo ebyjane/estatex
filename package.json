@@ -18,7 +18,7 @@
     "seed:admin": "ts-node scripts/seedAdmin.ts",
     "generate-data": "ts-node scripts/generateLargeDataset.ts",
     "add-images": "ts-node scripts/addPropertyImages.ts",
-    "dev:api": "npm run dev -w @real-estate/api",
+    "dev:api": "npx --prefix apps/api nest start --watch",
     "dev:web": "npm run dev -w @real-estate/web",
     "dev:web:clean": "npm run dev:clean -w @real-estate/web",
     "clean:web": "npm run clean -w @real-estate/web",

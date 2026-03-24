@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-require("./config/pg-ssl");
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 const common_1 = require("@nestjs/common");
 const core_1 = require("@nestjs/core");
 const typeorm_1 = require("typeorm");
