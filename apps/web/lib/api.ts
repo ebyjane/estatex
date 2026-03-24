@@ -2,10 +2,11 @@
  * Single source of truth for the public API base URL (inlined at build from NEXT_PUBLIC_*).
  * All client fetches should use `API_V1_BASE` / `fetchApi` from `src/lib/api.ts` — do not hardcode hosts.
  *
- * - Local: defaults to Nest on port 8000 if env is unset
- * - Production: set `NEXT_PUBLIC_API_URL` to your API origin (e.g. `https://api.example.com`) or same-origin `/api` with Next rewrites
+ * - Source: NEXT_PUBLIC_API_URL
+ * - Local fallback: Nest on port 8000 when env is unset
  */
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+export const API_URL = process.env.NEXT_PUBLIC_API_URL;
+export const API_BASE_URL = API_URL || 'http://localhost:8000';
 
 function resolveApiV1Base(baseUrl: string): string {
   const base = baseUrl.replace(/\/$/, '');
