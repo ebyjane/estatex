@@ -7,6 +7,8 @@ import {
 export { API_BASE_URL, API_V1_BASE, getApiOrigin };
 
 const DEFAULT_TIMEOUT_MS = 45_000;
+/** Listing submit includes large media; keep below typical reverse-proxy idle timeouts. */
+const SUBMIT_LISTING_TIMEOUT_MS = 180_000;
 
 export function getAuthHeaders(): Record<string, string> {
   if (typeof window === 'undefined') return {};
@@ -48,6 +50,41 @@ export async function uploadAdminMedia(files: File[]): Promise<{ urls: string[] 
     throw new Error(text.slice(0, 200) || 'Upload failed');
   }
   return JSON.parse(text) as { urls: string[] };
+}
+
+/**
+ * Multipart listing submit — do not set `Content-Type` (browser sets boundary).
+ * Sends optional Bearer token when present (signed-in owner / admin).
+ */
+export async function submitListingMultipart<T = Record<string, unknown>>(
+  path: string,
+  formData: FormData,
+  options?: { timeoutMs?: number },
+): Promise<T> {
+  if (typeof window === 'undefined') throw new Error('submitListingMultipart is only available in the browser');
+  const timeoutMs = options?.timeoutMs ?? SUBMIT_LISTING_TIMEOUT_MS;
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const res = await fetch(`${API_V1_BASE}${path}`, {
+      method: 'POST',
+      body: formData,
+      signal: ctrl.signal,
+      headers: { Accept: 'application/json', ...getAuthHeaders() },
+      cache: 'no-store',
+    });
+    const text = await res.text();
+    if (!res.ok) throw new Error(text.slice(0, 500) || 'Submit failed');
+    return JSON.parse(text) as T;
+  } catch (e) {
+    const aborted =
+      (e instanceof DOMException && e.name === 'AbortError') ||
+      (e instanceof Error && e.name === 'AbortError');
+    if (aborted) throw new TypeError(`REQUEST_TIMEOUT:${API_V1_BASE}${path}`);
+    throw e;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 export async function fetchApi<T>(path: string, init?: RequestInit & { timeoutMs?: number }): Promise<T> {

@@ -7,7 +7,7 @@ import clsx from 'clsx';
 import { CheckCircle2, ChevronLeft, ChevronRight, Home, Loader2, ShieldCheck, Sparkles } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { coerceOptionalLatLng } from '@/lib/geo';
-import { fetchApi, uploadAdminMedia } from '@/lib/api';
+import { fetchApi, submitListingMultipart } from '@/lib/api';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { LocationMapPicker } from './LocationMapPicker';
 
@@ -211,13 +211,6 @@ function parseImageUrls(text: string, max = 24): string[] {
   return splitHttpUrls(text).slice(0, max);
 }
 
-function appendUrlLines(current: string, urls: string[]): string {
-  const next = urls.filter(Boolean);
-  if (!next.length) return current;
-  const base = current.trim();
-  return base ? `${base}\n${next.join('\n')}` : next.join('\n');
-}
-
 /** Plain numbers, commas/spaces, or Indian units (crore/lakh). */
 function parseMoneyInput(raw: string): number | null {
   const s = raw.trim();
@@ -268,7 +261,9 @@ export function PostPropertyWizard({ editQuery: editQueryProp = '' }: { editQuer
   const [draft, setDraft] = useState<PostDraft>(emptyDraft);
   const [hydrated, setHydrated] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [uploadBusy, setUploadBusy] = useState(false);
+  /** Queued for multipart submit (not persisted in localStorage). */
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [videoFiles, setVideoFiles] = useState<File[]>([]);
   const [done, setDone] = useState<{
     id: string;
     aiValueScore?: number;
@@ -279,6 +274,8 @@ export function PostPropertyWizard({ editQuery: editQueryProp = '' }: { editQuer
   } | null>(null);
 
   useEffect(() => {
+    setImageFiles([]);
+    setVideoFiles([]);
     // Avoid merging a stale local draft when opening ?edit= — that masked the loaded listing (wrong city, empty contact).
     if (editQuery) {
       setDraft(emptyDraft());
@@ -296,6 +293,8 @@ export function PostPropertyWizard({ editQuery: editQueryProp = '' }: { editQuer
       .then((p) => {
         setEditId(p.id);
         const adminNow = useAuthStore.getState().user?.role === 'admin';
+        setImageFiles([]);
+        setVideoFiles([]);
         setDraft(mapPropertyToDraft(p, adminNow));
         setStep(0);
         toast.success('Loaded listing — make changes and save.');
@@ -367,38 +366,19 @@ export function PostPropertyWizard({ editQuery: editQueryProp = '' }: { editQuer
     setDraft((d) => ({ ...d, [key]: value }));
   }, []);
 
-  const uploadAdminFiles = useCallback(
-    async (files: FileList | null, kind: 'image' | 'video') => {
-      if (!isAdmin || !sessionChecked || !files?.length) return;
-      if (typeof window !== 'undefined' && !localStorage.getItem('token')?.trim()) {
-        toast.error('You are not signed in. Use Sign In, then try uploading again.');
-        return;
-      }
-      const list = Array.from(files).filter((f) =>
-        kind === 'image' ? f.type.startsWith('image/') : f.type.startsWith('video/'),
-      );
-      if (!list.length) {
-        toast.error(kind === 'image' ? 'Select image files' : 'Select video files');
-        return;
-      }
-      setUploadBusy(true);
-      try {
-        const { urls } = await uploadAdminMedia(list);
-        if (kind === 'image') {
-          setDraft((d) => ({ ...d, imageUrlsText: appendUrlLines(d.imageUrlsText, urls) }));
-        } else {
-          setDraft((d) => ({ ...d, videoUrlsText: appendUrlLines(d.videoUrlsText, urls) }));
-        }
-        toast.success(`Uploaded ${urls.length} file${urls.length === 1 ? '' : 's'}`);
-      } catch (e) {
-        const msg = (e as Error).message || 'Upload failed';
-        toast.error(msg.length > 180 ? `${msg.slice(0, 177)}…` : msg);
-      } finally {
-        setUploadBusy(false);
-      }
-    },
-    [isAdmin, sessionChecked],
-  );
+  const queueMediaFiles = useCallback((files: FileList | null, kind: 'image' | 'video') => {
+    if (!files?.length) return;
+    const list = Array.from(files).filter((f) =>
+      kind === 'image' ? f.type.startsWith('image/') : f.type.startsWith('video/'),
+    );
+    if (!list.length) {
+      toast.error(kind === 'image' ? 'Select image files' : 'Select video files');
+      return;
+    }
+    if (kind === 'image') setImageFiles((cur) => [...cur, ...list]);
+    else setVideoFiles((cur) => [...cur, ...list]);
+    toast.success(`${list.length} file(s) queued — uploads when you submit`);
+  }, []);
 
   const validateStep = useCallback(
     (i: number): string | null => {
@@ -454,6 +434,8 @@ export function PostPropertyWizard({ editQuery: editQueryProp = '' }: { editQuer
   const clearDraft = () => {
     localStorage.removeItem(DRAFT_KEY);
     setDraft(emptyDraft());
+    setImageFiles([]);
+    setVideoFiles([]);
     setStep(0);
     toast.success('Draft cleared');
   };
@@ -474,7 +456,7 @@ export function PostPropertyWizard({ editQuery: editQueryProp = '' }: { editQuer
         toast.error('Sign in first to submit as admin (uploads and admin publish need a valid session).');
         return;
       }
-      const imageUrls = isAdmin ? splitHttpUrls(draft.imageUrlsText) : parseImageUrls(draft.imageUrlsText);
+      const imageUrls = isAdmin ? splitHttpUrls(draft.imageUrlsText) : parseImageUrls(draft.imageUrlsText, 500);
       const coordResult = coerceOptionalLatLng(
         draft.latitude.trim() === '' ? '' : draft.latitude,
         draft.longitude.trim() === '' ? '' : draft.longitude,
@@ -501,52 +483,49 @@ export function PostPropertyWizard({ editQuery: editQueryProp = '' }: { editQuer
         }
       }
 
-      const body: Record<string, unknown> = {
-        title: draft.title.trim(),
-        description: draft.description.trim() || undefined,
-        countryCode: draft.countryCode.trim().toUpperCase().slice(0, 3) || 'IND',
-        city: draft.city.trim(),
-        state: draft.state.trim() || undefined,
-        addressLine1: draft.addressLine1.trim(),
-        propertyType: categoryToPropertyType(draft.propertyCategory),
-        listingType: draft.listingType,
-        price: parseMoneyInput(draft.price) ?? 0,
-        currencyCode: draft.currencyCode.trim().toUpperCase().slice(0, 3),
-        areaSqft: draft.areaSqft.trim() ? Number(draft.areaSqft) : undefined,
-        bedrooms: draft.bedrooms.trim() ? Number(draft.bedrooms) : undefined,
-        bathrooms: draft.bathrooms.trim() ? Number(draft.bathrooms) : undefined,
-        latitude: latSend,
-        longitude: lngSend,
-        ownerName: draft.ownerName.trim(),
-        ownerEmail: draft.ownerEmail.trim(),
-        ownerPhone: draft.ownerPhone.trim(),
-        furnishing: draft.furnishing.trim() || undefined,
-        floorNumber: draft.floorNumber.trim() ? Number(draft.floorNumber) : undefined,
-        totalFloors: draft.totalFloors.trim() ? Number(draft.totalFloors) : undefined,
-        depositAmount: draft.depositAmount.trim() ? parseMoneyInput(draft.depositAmount) ?? undefined : undefined,
-        maintenanceMonthly: draft.maintenanceMonthly.trim()
-          ? parseMoneyInput(draft.maintenanceMonthly) ?? undefined
-          : undefined,
-        whatsappOptIn: draft.whatsappOptIn,
-        amenities: draft.amenities.length ? draft.amenities : undefined,
-        imageUrls: imageUrls.length ? imageUrls : undefined,
-      };
-      if (draft.primaryImageUrl.trim()) body.primaryImageUrl = draft.primaryImageUrl.trim();
-      if (isAdmin) {
-        const vids = splitHttpUrls(draft.videoUrlsText);
-        if (vids.length) body.videoUrls = vids;
-        if (draft.primaryVideoUrl.trim()) body.primaryVideoUrl = draft.primaryVideoUrl.trim();
-      } else {
-        body.videoUrl = draft.videoUrl.trim() || undefined;
-      }
-      if (draft.listingType === 'sale' && draft.expectedRentMonthly.trim()) {
-        const er = parseMoneyInput(draft.expectedRentMonthly);
-        if (er != null) body.expectedRentMonthly = er;
-      }
-
       if (editId) {
-        /** Omit when empty so PATCH doesn’t delete every gallery row (updateWithAuth replaces images when key is sent). */
-        if (imageUrls.length) body.imageUrls = imageUrls;
+        const body: Record<string, unknown> = {
+          title: draft.title.trim(),
+          description: draft.description.trim() || undefined,
+          countryCode: draft.countryCode.trim().toUpperCase().slice(0, 3) || 'IND',
+          city: draft.city.trim(),
+          state: draft.state.trim() || undefined,
+          addressLine1: draft.addressLine1.trim(),
+          propertyType: categoryToPropertyType(draft.propertyCategory),
+          listingType: draft.listingType,
+          price: parseMoneyInput(draft.price) ?? 0,
+          currencyCode: draft.currencyCode.trim().toUpperCase().slice(0, 3),
+          areaSqft: draft.areaSqft.trim() ? Number(draft.areaSqft) : undefined,
+          bedrooms: draft.bedrooms.trim() ? Number(draft.bedrooms) : undefined,
+          bathrooms: draft.bathrooms.trim() ? Number(draft.bathrooms) : undefined,
+          latitude: latSend,
+          longitude: lngSend,
+          ownerName: draft.ownerName.trim(),
+          ownerEmail: draft.ownerEmail.trim(),
+          ownerPhone: draft.ownerPhone.trim(),
+          furnishing: draft.furnishing.trim() || undefined,
+          floorNumber: draft.floorNumber.trim() ? Number(draft.floorNumber) : undefined,
+          totalFloors: draft.totalFloors.trim() ? Number(draft.totalFloors) : undefined,
+          depositAmount: draft.depositAmount.trim() ? parseMoneyInput(draft.depositAmount) ?? undefined : undefined,
+          maintenanceMonthly: draft.maintenanceMonthly.trim()
+            ? parseMoneyInput(draft.maintenanceMonthly) ?? undefined
+            : undefined,
+          whatsappOptIn: draft.whatsappOptIn,
+          amenities: draft.amenities.length ? draft.amenities : undefined,
+          imageUrls: imageUrls.length ? imageUrls : undefined,
+        };
+        if (draft.primaryImageUrl.trim()) body.primaryImageUrl = draft.primaryImageUrl.trim();
+        if (isAdmin) {
+          const vids = splitHttpUrls(draft.videoUrlsText);
+          if (vids.length) body.videoUrls = vids;
+          if (draft.primaryVideoUrl.trim()) body.primaryVideoUrl = draft.primaryVideoUrl.trim();
+        } else {
+          body.videoUrl = draft.videoUrl.trim() || undefined;
+        }
+        if (draft.listingType === 'sale' && draft.expectedRentMonthly.trim()) {
+          const er = parseMoneyInput(draft.expectedRentMonthly);
+          if (er != null) body.expectedRentMonthly = er;
+        }
         const res = await fetchApi<{
           id?: string;
           aiValueScore?: number;
@@ -555,6 +534,8 @@ export function PostPropertyWizard({ editQuery: editQueryProp = '' }: { editQuer
           status?: string;
         }>(`/properties/${editId}`, { method: 'PATCH', body: JSON.stringify(body) });
         localStorage.removeItem(DRAFT_KEY);
+        setImageFiles([]);
+        setVideoFiles([]);
         setDone({
           id: res.id ?? editId,
           aiValueScore: res.aiValueScore,
@@ -569,15 +550,65 @@ export function PostPropertyWizard({ editQuery: editQueryProp = '' }: { editQuer
         return;
       }
 
+      const fd = new FormData();
+      fd.append('title', draft.title.trim());
+      if (draft.description.trim()) fd.append('description', draft.description.trim());
+      fd.append('countryCode', draft.countryCode.trim().toUpperCase().slice(0, 3) || 'IND');
+      fd.append('city', draft.city.trim());
+      if (draft.state.trim()) fd.append('state', draft.state.trim());
+      fd.append('addressLine1', draft.addressLine1.trim());
+      fd.append('propertyType', categoryToPropertyType(draft.propertyCategory));
+      fd.append('listingType', draft.listingType);
+      fd.append('price', String(parseMoneyInput(draft.price) ?? 0));
+      fd.append('currencyCode', draft.currencyCode.trim().toUpperCase().slice(0, 3));
+      if (draft.areaSqft.trim()) fd.append('areaSqft', String(Number(draft.areaSqft)));
+      if (draft.bedrooms.trim()) fd.append('bedrooms', String(Number(draft.bedrooms)));
+      if (draft.bathrooms.trim()) fd.append('bathrooms', String(Number(draft.bathrooms)));
+      if (latSend !== undefined) fd.append('latitude', String(latSend));
+      if (lngSend !== undefined) fd.append('longitude', String(lngSend));
+      fd.append('ownerName', draft.ownerName.trim());
+      fd.append('ownerEmail', draft.ownerEmail.trim());
+      fd.append('ownerPhone', draft.ownerPhone.trim());
+      if (draft.furnishing.trim()) fd.append('furnishing', draft.furnishing.trim());
+      if (draft.floorNumber.trim()) fd.append('floorNumber', String(Number(draft.floorNumber)));
+      if (draft.totalFloors.trim()) fd.append('totalFloors', String(Number(draft.totalFloors)));
+      if (draft.depositAmount.trim()) {
+        const d = parseMoneyInput(draft.depositAmount);
+        if (d != null) fd.append('depositAmount', String(d));
+      }
+      if (draft.maintenanceMonthly.trim()) {
+        const m = parseMoneyInput(draft.maintenanceMonthly);
+        if (m != null) fd.append('maintenanceMonthly', String(m));
+      }
+      fd.append('whatsappOptIn', draft.whatsappOptIn ? 'true' : 'false');
+      if (draft.amenities.length) fd.append('amenities', JSON.stringify(draft.amenities));
+      if (imageUrls.length) fd.append('imageUrls', JSON.stringify(imageUrls));
+      if (draft.primaryImageUrl.trim()) fd.append('primaryImageUrl', draft.primaryImageUrl.trim());
+      if (isAdmin) {
+        const vids = splitHttpUrls(draft.videoUrlsText);
+        if (vids.length) fd.append('videoUrls', JSON.stringify(vids));
+        if (draft.primaryVideoUrl.trim()) fd.append('primaryVideoUrl', draft.primaryVideoUrl.trim());
+      } else if (draft.videoUrl.trim()) {
+        fd.append('videoUrl', draft.videoUrl.trim());
+      }
+      if (draft.listingType === 'sale' && draft.expectedRentMonthly.trim()) {
+        const er = parseMoneyInput(draft.expectedRentMonthly);
+        if (er != null) fd.append('expectedRentMonthly', String(er));
+      }
+      for (const f of imageFiles) fd.append('images', f);
+      for (const f of videoFiles) fd.append('videos', f);
+
       const submitPath = isAdmin ? '/admin/submit-listing' : '/properties/submit-listing';
-      const res = await fetchApi<{
+      const res = await submitListingMultipart<{
         id: string;
         aiValueScore?: number;
         rentalYield?: number;
         riskScore?: number;
         status?: string;
-      }>(submitPath, { method: 'POST', body: JSON.stringify(body) });
+      }>(submitPath, fd);
       localStorage.removeItem(DRAFT_KEY);
+      setImageFiles([]);
+      setVideoFiles([]);
       setDone({
         id: res.id,
         aiValueScore: res.aiValueScore,
@@ -1010,48 +1041,55 @@ export function PostPropertyWizard({ editQuery: editQueryProp = '' }: { editQuer
           <div className="space-y-4">
             <p className="text-sm text-slate-400">
               {isAdmin
-                ? 'As admin you can paste URLs and/or upload images & videos to the server (served from /uploads). Uploads require an active login — use the same session as the Admin panel (e.g. admin@estatex.ai).'
-                : 'Paste public image URLs (one per line or comma-separated). Upload files to your storage or CDN first — we store links only.'}
+                ? 'Paste image/video URLs and/or queue files below. Files upload in one request when you submit (multipart). Admin submit requires sign-in.'
+                : 'Paste public image URLs and/or queue image/video files — everything uploads when you submit.'}
             </p>
-            {isAdmin && !sessionChecked && (
-              <p className="flex items-center gap-2 text-xs text-slate-500">
-                <Loader2 className="h-3.5 w-3.5 animate-spin text-cyan-500" />
-                Verifying session…
+            <div className="flex flex-wrap items-center gap-3 rounded-xl border border-white/15 bg-white/5 px-4 py-3">
+              <span className="text-xs font-medium text-slate-300">Queue files for submit</span>
+              <label className="cursor-pointer rounded-lg border border-white/15 bg-slate-800/80 px-3 py-1.5 text-xs text-slate-200 hover:bg-slate-800">
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="sr-only"
+                  onChange={(e) => {
+                    queueMediaFiles(e.target.files, 'image');
+                    e.target.value = '';
+                  }}
+                />
+                Add images
+              </label>
+              <label className="cursor-pointer rounded-lg border border-white/15 bg-slate-800/80 px-3 py-1.5 text-xs text-slate-200 hover:bg-slate-800">
+                <input
+                  type="file"
+                  accept="video/*"
+                  multiple
+                  className="sr-only"
+                  onChange={(e) => {
+                    queueMediaFiles(e.target.files, 'video');
+                    e.target.value = '';
+                  }}
+                />
+                Add videos
+              </label>
+              {(imageFiles.length > 0 || videoFiles.length > 0) && (
+                <button
+                  type="button"
+                  className="text-xs text-amber-400 hover:underline"
+                  onClick={() => {
+                    setImageFiles([]);
+                    setVideoFiles([]);
+                  }}
+                >
+                  Clear queued files
+                </button>
+              )}
+            </div>
+            {(imageFiles.length > 0 || videoFiles.length > 0) && (
+              <p className="text-xs text-slate-500">
+                Queued: {imageFiles.length} image(s), {videoFiles.length} video(s) — sent with final submit (long
+                uploads allowed up to ~3 minutes).
               </p>
-            )}
-            {isAdmin && sessionChecked && (
-              <div className="flex flex-wrap items-center gap-3 rounded-xl border border-cyan-500/25 bg-cyan-950/15 px-4 py-3">
-                <span className="text-xs font-medium text-cyan-200/90">Admin upload</span>
-                <label className="cursor-pointer rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-xs text-slate-200 hover:bg-white/10">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    className="sr-only"
-                    disabled={uploadBusy}
-                    onChange={(e) => {
-                      void uploadAdminFiles(e.target.files, 'image');
-                      e.target.value = '';
-                    }}
-                  />
-                  Add images
-                </label>
-                <label className="cursor-pointer rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-xs text-slate-200 hover:bg-white/10">
-                  <input
-                    type="file"
-                    accept="video/*"
-                    multiple
-                    className="sr-only"
-                    disabled={uploadBusy}
-                    onChange={(e) => {
-                      void uploadAdminFiles(e.target.files, 'video');
-                      e.target.value = '';
-                    }}
-                  />
-                  Add videos
-                </label>
-                {uploadBusy ? <Loader2 className="h-4 w-4 animate-spin text-cyan-400" /> : null}
-              </div>
             )}
             <label className="block">
               <span className="text-xs font-medium text-slate-400">Image URLs</span>

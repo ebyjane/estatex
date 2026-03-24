@@ -18,6 +18,7 @@ const passport_1 = require("@nestjs/passport");
 const jwt_1 = require("@nestjs/jwt");
 const current_user_decorator_1 = require("../auth/decorators/current-user.decorator");
 const ai_service_1 = require("./ai.service");
+const listing_multipart_util_1 = require("./listing-multipart.util");
 const properties_service_1 = require("./properties.service");
 let PropertiesController = class PropertiesController {
     constructor(service, ai, jwt) {
@@ -85,7 +86,7 @@ let PropertiesController = class PropertiesController {
             };
         }
     }
-    submitListing(body, auth) {
+    submitListing(files, body, auth) {
         let ownerUserId;
         if (auth?.startsWith('Bearer ')) {
             try {
@@ -95,7 +96,24 @@ let PropertiesController = class PropertiesController {
             catch {
             }
         }
-        return this.service.submitPublicListing(body, { ownerUserId });
+        console.log('[POST /api/v1/properties/submit-listing] multipart field keys:', Object.keys(body ?? {}));
+        console.log('[POST /api/v1/properties/submit-listing] files:', JSON.stringify({
+            images: files?.images?.map((f) => ({
+                originalname: f.originalname,
+                size: f.size,
+                mimetype: f.mimetype,
+            })),
+            videos: files?.videos?.map((f) => ({
+                originalname: f.originalname,
+                size: f.size,
+                mimetype: f.mimetype,
+            })),
+        }));
+        const dto = (0, listing_multipart_util_1.buildListingDtoFromMultipart)(body, files ?? {}, {
+            maxImages: 24,
+            allowMultiVideo: false,
+        });
+        return this.service.submitPublicListing(dto, { ownerUserId });
     }
     canEdit(id, user) {
         return this.service.canEditProperty(id, user);
@@ -194,10 +212,12 @@ __decorate([
 ], PropertiesController.prototype, "list", null);
 __decorate([
     (0, common_1.Post)('submit-listing'),
-    __param(0, (0, common_1.Body)()),
-    __param(1, (0, common_1.Headers)('authorization')),
+    (0, common_1.UseInterceptors)((0, listing_multipart_util_1.createSubmitListingFileInterceptor)(24, 20)),
+    __param(0, (0, common_1.UploadedFiles)()),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, common_1.Headers)('authorization')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:paramtypes", [Object, Object, String]),
     __metadata("design:returntype", void 0)
 ], PropertiesController.prototype, "submitListing", null);
 __decorate([

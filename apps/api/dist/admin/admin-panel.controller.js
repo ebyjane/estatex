@@ -17,6 +17,7 @@ exports.AdminPanelController = void 0;
 const common_1 = require("@nestjs/common");
 const passport_1 = require("@nestjs/passport");
 const admin_role_guard_1 = require("../auth/guards/admin-role.guard");
+const listing_multipart_util_1 = require("../properties/listing-multipart.util");
 const properties_service_1 = require("../properties/properties.service");
 const admin_panel_service_1 = require("./admin-panel.service");
 let AdminPanelController = AdminPanelController_1 = class AdminPanelController {
@@ -104,8 +105,25 @@ let AdminPanelController = AdminPanelController_1 = class AdminPanelController {
     patchSettings(body) {
         return this.panel.patchSettings(body);
     }
-    submitListing(body) {
-        return this.properties.submitPublicListing(body, { maxImages: 500, allowMultiVideo: true });
+    submitListing(files, body) {
+        console.log('[POST /api/v1/admin/submit-listing] multipart field keys:', Object.keys(body ?? {}));
+        console.log('[POST /api/v1/admin/submit-listing] files:', JSON.stringify({
+            images: files?.images?.map((f) => ({
+                originalname: f.originalname,
+                size: f.size,
+                mimetype: f.mimetype,
+            })),
+            videos: files?.videos?.map((f) => ({
+                originalname: f.originalname,
+                size: f.size,
+                mimetype: f.mimetype,
+            })),
+        }));
+        const dto = (0, listing_multipart_util_1.buildListingDtoFromMultipart)(body, files ?? {}, {
+            maxImages: 500,
+            allowMultiVideo: true,
+        });
+        return this.properties.submitPublicListing(dto, { maxImages: 500, allowMultiVideo: true });
     }
 };
 exports.AdminPanelController = AdminPanelController;
@@ -231,9 +249,11 @@ __decorate([
 ], AdminPanelController.prototype, "patchSettings", null);
 __decorate([
     (0, common_1.Post)('submit-listing'),
-    __param(0, (0, common_1.Body)()),
+    (0, common_1.UseInterceptors)((0, listing_multipart_util_1.createSubmitListingFileInterceptor)(500, 80)),
+    __param(0, (0, common_1.UploadedFiles)()),
+    __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
+    __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", void 0)
 ], AdminPanelController.prototype, "submitListing", null);
 exports.AdminPanelController = AdminPanelController = AdminPanelController_1 = __decorate([
